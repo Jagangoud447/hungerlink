@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HungerLink</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=DM+Sans:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --g:#1D9E75;--gd:#085041;--gl:#E1F5EE;--gm:#5DCAA5;
+  --a:#BA7517;--al:#FAEEDA;--am:#EF9F27;
+  --c:#D85A30;--cl:#FAECE7;
+  --gy:#888780;--gyl:#F4F3EF;
+  --bl:#185FA5;--bll:#E6F1FB;
+  --bg:#F7F6F2;--card:#FFFFFF;--bdr:#E8E6DF;
+  --tx:#1A1A18;--t2:#5F5E5A;--t3:#888780;
+  --sh:0 1px 2px rgba(0,0,0,.05),0 4px 12px rgba(0,0,0,.04);
+  --r:14px;--rs:9px;--rx:6px;
+}
+html,body{min-height:100vh;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--tx);font-size:15px}
+a{color:var(--g);cursor:pointer;text-decoration:none}
+a:hover{text-decoration:underline}
+button{font-family:'DM Sans',sans-serif}
+
+/* AUTH */
+#auth-wrap{min-height:100vh;display:flex}
+.auth-panel{width:40%;background:var(--gd);display:flex;flex-direction:column;justify-content:center;padding:3rem 2.5rem;position:relative;overflow:hidden}
+.auth-panel::before{content:'';position:absolute;width:380px;height:380px;border-radius:50%;background:rgba(255,255,255,.04);top:-120px;right:-120px;pointer-events:none}
+.auth-panel::after{content:'';position:absolute;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.03);bottom:-80px;left:-60px;pointer-events:none}
+.ap-logo{font-family:'Sora',sans-serif;font-weight:800;font-size:2rem;color:#fff;letter-spacing:-.8px;margin-bottom:.4rem}
+.ap-logo em{color:var(--gm);font-style:normal}
+.ap-tag{color:rgba(255,255,255,.6);font-size:.9rem;line-height:1.7;max-width:270px;margin-bottom:2rem}
+.ap-feat{display:flex;align-items:flex-start;gap:10px;margin-bottom:.9rem}
+.ap-icon{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ap-icon svg{width:15px;height:15px;fill:var(--gm)}
+.ap-ft{font-size:.8rem;color:rgba(255,255,255,.65)}
+.ap-ft strong{color:#fff;display:block;font-size:.85rem;margin-bottom:1px}
+.auth-main{flex:1;display:flex;align-items:center;justify-content:center;padding:2rem}
+.abox{background:var(--card);border-radius:var(--r);box-shadow:var(--sh);padding:2.25rem;width:100%;max-width:420px;display:none}
+.abox.visible{display:block}
+.abox h2{font-family:'Sora',sans-serif;font-weight:700;font-size:1.35rem;margin-bottom:.2rem;color:var(--tx)}
+.abox .sub{font-size:.85rem;color:var(--t2);margin-bottom:1.5rem;line-height:1.5}
+.step-ind{display:flex;gap:6px;margin-bottom:1.25rem}
+.step-dot{width:24px;height:4px;border-radius:2px;background:var(--bdr)}
+.step-dot.done{background:var(--g)}
+.step-dot.active{background:var(--gm)}
+.fg{margin-bottom:1rem}
+label.fl{display:block;font-size:.78rem;font-weight:500;color:var(--t2);margin-bottom:.35rem}
+.fi{width:100%;padding:10px 13px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:.88rem;font-family:'DM Sans',sans-serif;color:var(--tx);background:#fff;outline:none;transition:border .15s,box-shadow .15s}
+.fi:focus{border-color:var(--g);box-shadow:0 0 0 3px rgba(29,158,117,.1)}
+select.fi{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;cursor:pointer}
+.mtabs{display:flex;border:1.5px solid var(--bdr);border-radius:var(--rs);overflow:hidden;margin-bottom:1.1rem}
+.mtab{flex:1;padding:9px;text-align:center;font-size:.83rem;font-weight:500;cursor:pointer;color:var(--t2);transition:all .15s;border:none;background:none}
+.mtab.on{background:var(--g);color:#fff}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:1.1rem}
+.rcard{border:1.5px solid var(--bdr);border-radius:var(--rs);padding:13px 10px;text-align:center;cursor:pointer;transition:all .15s}
+.rcard:hover{border-color:var(--gm);background:var(--gl)}
+.rcard.sel{border-color:var(--g);background:var(--gl)}
+.rcard.sel .ricon{background:var(--g)}
+.ricon{width:38px;height:38px;border-radius:50%;background:var(--gyl);display:flex;align-items:center;justify-content:center;margin:0 auto .5rem;font-size:17px;transition:background .15s}
+.rname{font-size:.8rem;font-weight:500;color:var(--tx)}
+.rsub{font-size:.7rem;color:var(--t3);margin-top:1px}
+.orow{display:flex;gap:8px;justify-content:center;margin-bottom:1.25rem}
+.oi{width:48px;height:54px;border:1.5px solid var(--bdr);border-radius:var(--rs);font-size:1.4rem;font-weight:700;font-family:'Sora',sans-serif;text-align:center;outline:none;transition:all .15s}
+.oi:focus{border-color:var(--g);box-shadow:0 0 0 3px rgba(29,158,117,.1)}
+.otimer{text-align:center;font-size:.82rem;color:var(--t3);margin-bottom:1rem}
+.btn{width:100%;padding:11px;border-radius:var(--rs);font-size:.9rem;font-weight:500;cursor:pointer;border:none;transition:all .15s;margin-bottom:8px}
+.btn-g{background:var(--g);color:#fff}.btn-g:hover{background:var(--gd)}
+.btn-o{background:none;border:1.5px solid var(--bdr);color:var(--tx)}.btn-o:hover{background:var(--gyl)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.switch{text-align:center;font-size:.83rem;color:var(--t2);margin-top:.75rem}
+.demo-hint{background:var(--bll);border:1px solid #B5D4F4;border-radius:var(--rs);padding:9px 13px;font-size:.8rem;color:var(--bl);margin-bottom:1rem}
+
+/* APP SHELL */
+#app-wrap{display:none;min-height:100vh;flex-direction:column}
+.topbar{background:var(--card);border-bottom:1px solid var(--bdr);height:56px;display:flex;align-items:center;justify-content:space-between;padding:0 1.25rem;position:sticky;top:0;z-index:200}
+.tlogo{font-family:'Sora',sans-serif;font-weight:800;font-size:1.1rem;color:var(--gd);letter-spacing:-.4px;display:flex;align-items:center;gap:7px}
+.tlogo-dot{width:8px;height:8px;border-radius:50%;background:var(--g)}
+.tnav{display:flex;gap:2px}
+.tnav-btn{background:none;border:none;cursor:pointer;padding:6px 11px;border-radius:var(--rx);font-size:.8rem;font-weight:500;color:var(--t2);transition:all .15s}
+.tnav-btn:hover{background:var(--gyl);color:var(--tx)}
+.tnav-btn.on{background:var(--gl);color:var(--gd)}
+.tuser{display:flex;align-items:center;gap:9px}
+.tavatar{width:32px;height:32px;border-radius:50%;background:var(--g);display:flex;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:700;font-size:.75rem;color:#fff}
+.tuname{font-size:.8rem;font-weight:500}
+.turole{font-size:.7rem;color:var(--t3)}
+.tbtn{background:none;border:1px solid var(--bdr);border-radius:var(--rx);padding:5px 10px;font-size:.75rem;cursor:pointer;color:var(--t2);transition:all .15s}
+.tbtn:hover{background:var(--cl);color:var(--c);border-color:var(--c)}
+.layout{display:flex;flex:1;min-height:calc(100vh - 56px)}
+.sidebar{width:210px;background:var(--card);border-right:1px solid var(--bdr);padding:1rem 0;flex-shrink:0}
+.slabel{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);padding:3px 1rem;margin-top:6px}
+.sitem{display:flex;align-items:center;gap:9px;padding:8px 1rem;cursor:pointer;font-size:.83rem;font-weight:500;color:var(--t2);transition:all .15s;margin:1px 6px;border-radius:var(--rx)}
+.sitem:hover{background:var(--gyl);color:var(--tx)}
+.sitem.on{background:var(--gl);color:var(--gd)}
+.sitem svg{width:15px;height:15px;flex-shrink:0;fill:currentColor}
+.content{flex:1;padding:1.5rem;overflow-y:auto;max-width:900px}
+
+/* PAGE COMPONENTS */
+.ptitle{font-family:'Sora',sans-serif;font-weight:700;font-size:1.25rem;margin-bottom:.2rem}
+.psub{font-size:.83rem;color:var(--t2);margin-bottom:1.25rem}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:1.5rem}
+.scard{background:var(--card);border:1px solid var(--bdr);border-radius:var(--rs);padding:.9rem 1rem}
+.slb{font-size:.73rem;color:var(--t3);font-weight:500;margin-bottom:.25rem}
+.sval{font-family:'Sora',sans-serif;font-weight:700;font-size:1.5rem;color:var(--tx)}
+.sval.g{color:var(--g)}.sval.a{color:var(--a)}.sval.c{color:var(--c)}
+.card{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r);padding:1.1rem;margin-bottom:.9rem}
+.ch{display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem}
+.ct{font-family:'Sora',sans-serif;font-weight:600;font-size:.9rem;color:var(--tx)}
+.badge{display:inline-flex;align-items:center;font-size:.7rem;font-weight:500;padding:3px 8px;border-radius:20px}
+.badge.g{background:var(--gl);color:var(--gd)}.badge.a{background:var(--al);color:var(--a)}.badge.c{background:var(--cl);color:var(--c)}.badge.gy{background:var(--gyl);color:var(--gy)}.badge.b{background:var(--bll);color:var(--bl)}
+.dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+.dot.g{background:var(--g)}.dot.a{background:var(--am)}.dot.c{background:var(--c)}
+.row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--bdr)}
+.row:last-child{border-bottom:none}
+.rl{display:flex;align-items:center;gap:9px}
+.in{font-size:.85rem;font-weight:500;color:var(--tx)}
+.is{font-size:.75rem;color:var(--t3)}
+.tabs{display:flex;border-bottom:1px solid var(--bdr);margin-bottom:1.1rem}
+.tab{padding:8px 14px;font-size:.81rem;font-weight:500;cursor:pointer;border-bottom:2px solid transparent;color:var(--t2);transition:all .15s;border-top:none;border-left:none;border-right:none;background:none;font-family:'DM Sans',sans-serif}
+.tab.on{color:var(--g);border-bottom-color:var(--g)}
+.tab:hover{color:var(--tx)}
+.panel{display:none}.panel.on{display:block}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.abtn{padding:8px 17px;border-radius:var(--rs);font-size:.83rem;font-weight:500;cursor:pointer;border:none;font-family:'DM Sans',sans-serif;transition:all .15s}
+.ag{background:var(--g);color:#fff}.ag:hover{background:var(--gd)}
+.ao{background:none;border:1.5px solid var(--bdr);color:var(--tx)}.ao:hover{background:var(--gyl)}
+.ar{background:var(--cl);color:var(--c);border:none}.ar:hover{background:var(--c);color:#fff}
+.ab{background:var(--bll);color:var(--bl);border:none}.ab:hover{background:var(--bl);color:#fff}
+.tline{display:flex;margin-bottom:1.1rem}
+.ts{flex:1;text-align:center;position:relative}
+.tdot{width:26px;height:26px;border-radius:50%;margin:0 auto 4px;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;font-family:'Sora',sans-serif;position:relative;z-index:1}
+.tdot.dn{background:var(--g);color:#fff}.tdot.ac{background:var(--al);color:var(--a);border:2px solid var(--am)}.tdot.pd{background:var(--gyl);color:var(--t3)}
+.tl-line{position:absolute;top:13px;left:50%;width:100%;height:2px;background:var(--bdr);z-index:0}
+.ts:last-child .tl-line{display:none}
+.tlb{font-size:.65rem;color:var(--t3)}
+.aib{background:linear-gradient(135deg,#EDFAF4,#EDF5FB);border:1px solid var(--gm);border-radius:var(--r);padding:.9rem 1.1rem;margin-bottom:.85rem}
+.ail{font-size:.68rem;font-weight:700;color:var(--g);letter-spacing:.07em;text-transform:uppercase;margin-bottom:.35rem;display:flex;align-items:center;gap:5px}
+.ait{font-size:.85rem;color:var(--tx);line-height:1.6}
+.albox{display:flex;align-items:flex-start;gap:9px;padding:9px 12px;border-radius:var(--rs);margin-bottom:7px}
+.albox.urg{background:var(--cl);border:1px solid #F0997B}.albox.wrn{background:var(--al);border:1px solid #FAC775}
+.alicon{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.7rem;font-weight:700}
+.urg .alicon{background:var(--c);color:#fff}.wrn .alicon{background:var(--am);color:#fff}
+.altt{font-size:.83rem;font-weight:500}.alst{font-size:.75rem;color:var(--t2);margin-top:2px}
+.medal{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;font-family:'Sora',sans-serif;flex-shrink:0}
+.m1{background:#F0E68C;color:#7A5C00}.m2{background:#D3D3D3;color:#555}.m3{background:#D2B48C;color:#5A3B1E}.m0{background:var(--gyl);color:var(--gy)}
+.frow{border:1px solid var(--bdr);border-radius:var(--rs);padding:10px 13px;margin-bottom:7px;display:flex;align-items:center;justify-content:space-between;background:var(--card);transition:all .15s}
+.frow:hover{background:var(--gl);border-color:var(--gm)}
+.chkitem{display:flex;align-items:center;gap:9px;padding:8px 0;border-bottom:1px solid var(--bdr);font-size:.85rem}
+.chkitem:last-child{border-bottom:none}
+.chkbox{width:19px;height:19px;border-radius:50%;background:var(--gl);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--t3)}
+.empty svg{width:44px;height:44px;fill:var(--bdr);margin-bottom:.6rem}
+.empty p{font-size:.85rem}
+.urgitem{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;background:var(--gyl);border-radius:var(--rs);margin-bottom:7px;border:1px solid transparent;transition:all .15s}
+.urgitem:hover{background:var(--gl);border-color:var(--gm)}
+.mbar{height:4px;border-radius:2px;background:var(--bdr);margin-top:5px;width:100px;overflow:hidden}
+.mfill{height:100%;border-radius:2px}
+.spin{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:5px}
+@keyframes spin{to{transform:rotate(360deg)}}
+#toast{position:fixed;bottom:20px;right:20px;background:var(--gd);color:#fff;padding:11px 18px;border-radius:var(--rs);font-size:.85rem;font-weight:500;z-index:9999;transform:translateY(60px);opacity:0;transition:all .25s;max-width:300px;pointer-events:none}
+#toast.show{transform:translateY(0);opacity:1}
+#toast.err{background:#8B1A1A}
+.err-txt{color:var(--c);font-size:.78rem;margin-top:4px;display:none}
+
+/* MAP */
+.map-container{border-radius:var(--r);overflow:hidden;border:1px solid var(--bdr);margin-bottom:.85rem;position:relative}
+#vol-map,#delivery-map,#photo-map{height:320px;width:100%}
+.map-overlay{position:absolute;top:10px;right:10px;z-index:1000;background:white;border-radius:var(--rs);padding:8px 12px;font-size:.75rem;box-shadow:var(--sh);max-width:220px}
+.map-overlay strong{display:block;font-size:.78rem;color:var(--gd);margin-bottom:3px}
+.route-info{background:var(--gl);border:1px solid var(--gm);border-radius:var(--rs);padding:9px 13px;margin-bottom:.75rem;display:flex;align-items:center;gap:10px}
+.route-info-icon{font-size:1.2rem}
+.route-info-text{font-size:.82rem;color:var(--tx);line-height:1.5}
+.route-info-text strong{color:var(--gd)}
+
+/* AI suggestion box enhanced */
+.ai-dest-box{background:linear-gradient(135deg,#EDFAF4,#F0F9FF);border:2px solid var(--g);border-radius:var(--r);padding:1rem 1.2rem;margin-bottom:1rem}
+.ai-dest-title{font-family:'Sora',sans-serif;font-weight:700;font-size:.95rem;color:var(--gd);margin-bottom:.5rem;display:flex;align-items:center;gap:8px}
+.ai-dest-badge{display:inline-flex;align-items:center;gap:4px;background:var(--g);color:#fff;font-size:.72rem;font-weight:600;padding:3px 9px;border-radius:20px}
+.ai-dest-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid rgba(29,158,117,.15)}
+.ai-dest-row:last-child{border-bottom:none;padding-bottom:0}
+.ai-dest-label{font-size:.8rem;color:var(--t2)}
+.ai-dest-val{font-size:.82rem;font-weight:600;color:var(--tx)}
+
+/* Photo upload */
+.photo-upload-area{border:2px dashed var(--bdr);border-radius:var(--r);padding:1.5rem;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.photo-upload-area:hover,.photo-upload-area.dragover{border-color:var(--g);background:var(--gl)}
+.photo-upload-area input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer}
+.photo-preview{width:100%;max-height:200px;object-fit:cover;border-radius:var(--rs);display:none;margin-top:.75rem}
+.photo-upload-icon{font-size:2rem;margin-bottom:.5rem;display:block}
+.photo-upload-text{font-size:.85rem;color:var(--t2)}
+.photo-upload-text strong{color:var(--g)}
+
+/* Access code box (replaces admin in signup) */
+.access-box{background:linear-gradient(135deg,#FFF8E7,#FFF3E0);border:1.5px solid var(--am);border-radius:var(--r);padding:1rem 1.2rem;margin-top:.5rem}
+.access-box-title{font-size:.8rem;font-weight:700;color:var(--a);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.05em}
+.access-box-desc{font-size:.78rem;color:var(--t2);line-height:1.5}
+
+/* Delivery confirmed card */
+.delivery-confirmed{background:linear-gradient(135deg,#EDFAF4,#E8F8F5);border:2px solid var(--g);border-radius:var(--r);padding:1.25rem;text-align:center;margin-bottom:.9rem}
+.delivery-confirmed-icon{font-size:2.5rem;margin-bottom:.5rem;display:block}
+.delivery-confirmed-title{font-family:'Sora',sans-serif;font-weight:700;font-size:1rem;color:var(--gd);margin-bottom:.3rem}
+.delivery-confirmed-sub{font-size:.82rem;color:var(--t2)}
+
+/* Progress steps for volunteer */
+.vol-steps{display:flex;margin-bottom:1.2rem;gap:0}
+.vol-step{flex:1;text-align:center;position:relative}
+.vol-step:not(:last-child)::after{content:'';position:absolute;top:15px;left:60%;width:80%;height:3px;background:var(--bdr);z-index:0}
+.vol-step.done:not(:last-child)::after{background:var(--g)}
+.vol-step-dot{width:32px;height:32px;border-radius:50%;margin:0 auto 5px;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;font-family:'Sora',sans-serif;position:relative;z-index:1;border:2px solid var(--bdr);background:white;transition:all .3s}
+.vol-step.done .vol-step-dot{background:var(--g);border-color:var(--g);color:white}
+.vol-step.active .vol-step-dot{background:white;border-color:var(--g);color:var(--g);box-shadow:0 0 0 4px rgba(29,158,117,.15)}
+.vol-step.pending .vol-step-dot{background:var(--gyl);border-color:var(--bdr);color:var(--t3)}
+.vol-step-label{font-size:.65rem;color:var(--t3);margin-top:2px}
+.vol-step.done .vol-step-label,.vol-step.active .vol-step-label{color:var(--gd);font-weight:600}
+
+/* Farmer page improvements */
+.farmer-stat-band{background:linear-gradient(135deg,var(--gd),#0D7055);border-radius:var(--r);padding:1.2rem 1.4rem;margin-bottom:1.2rem;color:white;display:flex;align-items:center;justify-content:space-between}
+.fsb-left h3{font-family:'Sora',sans-serif;font-weight:700;font-size:1rem;margin-bottom:.2rem}
+.fsb-left p{font-size:.8rem;opacity:.75}
+.fsb-nums{display:flex;gap:1.5rem}
+.fsb-num{text-align:center}
+.fsb-num-val{font-family:'Sora',sans-serif;font-weight:700;font-size:1.4rem}
+.fsb-num-label{font-size:.68rem;opacity:.7}
+
+/* Leaflet popup custom */
+.leaflet-popup-content-wrapper{border-radius:var(--rs) !important;box-shadow:var(--sh) !important}
+.leaflet-popup-content{font-family:'DM Sans',sans-serif !important;font-size:.82rem !important;line-height:1.5 !important}
+.popup-title{font-weight:700;color:var(--gd);margin-bottom:3px;font-size:.85rem}
+.popup-sub{color:var(--t2);font-size:.78rem}
+.popup-badge{display:inline-block;background:var(--gl);color:var(--gd);font-size:.68rem;font-weight:600;padding:2px 7px;border-radius:10px;margin-top:4px}
+.popup-badge.red{background:var(--cl);color:var(--c)}
+.popup-badge.orange{background:var(--al);color:var(--a)}
+
+@media(max-width:680px){
+  .auth-panel{display:none}
+  .fg2{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .sgrid{grid-template-columns:1fr 1fr}
+  .farmer-stat-band{flex-direction:column;gap:1rem}
+}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-wrap">
+  <div class="auth-panel">
+    <div class="ap-logo">Hunger<em>Link</em></div>
+    <p class="ap-tag">Smart food rescue &amp; redistribution — AI-powered routing connects surplus food with communities in need.</p>
+    <div class="ap-feat">
+      <div class="ap-icon"><svg viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg></div>
+      <div class="ap-ft"><strong>SDG 2: Zero Hunger</strong>AI-powered food redistribution network</div>
+    </div>
+    <div class="ap-feat">
+      <div class="ap-icon"><svg viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg></div>
+      <div class="ap-ft"><strong>AI Route Guidance</strong>Smart delivery decisions based on quantity</div>
+    </div>
+    <div class="ap-feat">
+      <div class="ap-icon"><svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg></div>
+      <div class="ap-ft"><strong>Photo Proof</strong>Geo-tagged delivery confirmation</div>
+    </div>
+  </div>
+
+  <div class="auth-main">
+    <!-- Landing -->
+    <div id="s-land" class="abox visible">
+      <h2>Welcome to HungerLink</h2>
+      <p class="sub">Join the network. Sign in or create an account to get started.</p>
+      <button class="btn btn-g" id="land-signin-btn">Sign In</button>
+      <button class="btn btn-o" id="land-signup-btn">Create Account</button>
+      <p class="switch" style="margin-top:.5rem;font-size:.78rem;color:var(--t3)">Supporting SDG Goal 2 · Zero Hunger</p>
+    </div>
+
+    <!-- Login -->
+    <div id="s-login" class="abox">
+      <h2>Sign In</h2>
+      <p class="sub">Enter your registered email or mobile number</p>
+      <div class="mtabs">
+        <button class="mtab on" id="login-email-tab">Email</button>
+        <button class="mtab" id="login-mobile-tab">Mobile</button>
+      </div>
+      <div id="login-email-wrap">
+        <div class="fg"><label class="fl">Email address</label><input class="fi" type="email" id="login-email" placeholder="you@example.com"></div>
+      </div>
+      <div id="login-mobile-wrap" style="display:none">
+        <div class="fg"><label class="fl">Mobile number</label><input class="fi" type="tel" id="login-mobile" placeholder="+91 98765 43210"></div>
+      </div>
+      <div class="err-txt" id="login-err">Please enter your email or mobile number</div>
+      <button class="btn btn-g" id="login-otp-btn">Send OTP</button>
+      <p class="switch"><a id="login-back-land">← Back</a> &nbsp;·&nbsp; New here? <a id="login-goto-signup">Create account</a></p>
+    </div>
+
+    <!-- Signup Step 1 -->
+    <div id="s-signup1" class="abox">
+      <div class="step-ind"><div class="step-dot active"></div><div class="step-dot"></div><div class="step-dot"></div></div>
+      <h2>Create Account</h2>
+      <p class="sub">Step 1 of 3 — Your contact details</p>
+      <div class="fg"><label class="fl">Full name</label><input class="fi" type="text" id="su-name" placeholder="Your full name"></div>
+      <div class="mtabs">
+        <button class="mtab on" id="su-email-tab">Email</button>
+        <button class="mtab" id="su-mobile-tab">Mobile</button>
+      </div>
+      <div id="su-email-wrap">
+        <div class="fg"><label class="fl">Email address</label><input class="fi" type="email" id="su-email" placeholder="you@example.com"></div>
+      </div>
+      <div id="su-mobile-wrap" style="display:none">
+        <div class="fg"><label class="fl">Mobile number</label><input class="fi" type="tel" id="su-mobile" placeholder="+91 98765 43210"></div>
+      </div>
+      <div class="err-txt" id="su1-err">Please fill all fields</div>
+      <button class="btn btn-g" id="su1-next-btn">Continue →</button>
+      <p class="switch">Already have an account? <a id="su1-goto-login">Sign in</a></p>
+    </div>
+
+    <!-- Signup Step 2: Role — NO ADMIN option, replaced with access-code flow -->
+    <div id="s-signup2" class="abox">
+      <div class="step-ind"><div class="step-dot done"></div><div class="step-dot active"></div><div class="step-dot"></div></div>
+      <h2>Who are you?</h2>
+      <p class="sub">Step 2 of 3 — Select your role on HungerLink</p>
+      <div class="rgrid">
+        <div class="rcard" data-role="Restaurant / Food Donor"><div class="ricon">🍽️</div><div class="rname">Restaurant / Donor</div><div class="rsub">Hotels, caterers, function halls</div></div>
+        <div class="rcard" data-role="Farmer"><div class="ricon">🌾</div><div class="rname">Farmer</div><div class="rsub">Surplus produce &amp; crops</div></div>
+        <div class="rcard" data-role="Volunteer"><div class="ricon">🤝</div><div class="rname">Volunteer</div><div class="rsub">Collect &amp; distribute food</div></div>
+        <div class="rcard" data-role="Charity / Shelter"><div class="ricon">🏠</div><div class="rname">Charity / Shelter</div><div class="rsub">Orphanages, NGOs, shelters</div></div>
+        <div class="rcard" data-role="__admin_access__" style="grid-column:1/-1;border-color:var(--am);background:linear-gradient(135deg,#FFF8E7,#FFF3E0)">
+          <div class="ricon" style="background:var(--al)">🔐</div>
+          <div class="rname">Organisation / Admin</div>
+          <div class="rsub">Requires authorisation code</div>
+        </div>
+      </div>
+      <div id="admin-access-code-wrap" style="display:none">
+        <div class="access-box">
+          <div class="access-box-title">🔑 Admin Access Code Required</div>
+          <div class="access-box-desc">Admin access is restricted. Contact the platform owner or your organization to obtain an authorisation code.</div>
+          <div class="fg" style="margin-top:.75rem;margin-bottom:0"><label class="fl">Enter access code</label><input class="fi" id="admin-code-input" placeholder="e.g. HL-ADMIN-2024" type="password"></div>
+        </div>
+      </div>
+      <div class="err-txt" id="su2-err">Please select a role</div>
+      <button class="btn btn-g" id="su2-next-btn">Continue →</button>
+      <p class="switch"><a id="su2-back">← Back</a></p>
+    </div>
+
+    <!-- OTP -->
+    <div id="s-otp" class="abox">
+      <div class="step-ind" id="otp-steps"><div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div></div>
+      <h2>OTP Verification</h2>
+      <p class="sub" id="otp-sub">Enter the 6-digit code sent to your contact</p>
+      <div class="orow">
+        <input class="oi" maxlength="1" type="text" inputmode="numeric" id="o0">
+        <input class="oi" maxlength="1" type="text" inputmode="numeric" id="o1">
+        <input class="oi" maxlength="1" type="text" inputmode="numeric" id="o2">
+        <input class="oi" maxlength="1" type="text" inputmode="numeric" id="o3">
+        <input class="oi" maxlength="1" type="text" inputmode="numeric" id="o4">
+        <input class="oi" maxlength="1" type="text" inputmode="numeric" id="o5">
+      </div>
+      <div class="otimer" id="otp-timer">Resend OTP in <span id="otp-cd">30s</span></div>
+      <div class="demo-hint" id="demo-hint"><strong>Demo:</strong> OTP will be shown here → <span id="demo-otp-val" style="font-weight:700;color:#0C447C"></span></div>
+      <div class="err-txt" id="otp-err">Please enter the 6-digit OTP</div>
+      <button class="btn btn-g" id="otp-verify-btn">Verify &amp; Continue</button>
+      <p class="switch"><a id="otp-back">← Back</a></p>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-wrap">
+  <div class="topbar">
+    <div class="tlogo"><div class="tlogo-dot"></div> HungerLink</div>
+    <div class="tnav" id="top-nav"></div>
+    <div class="tuser">
+      <div class="tavatar" id="t-avatar">U</div>
+      <div><div class="tuname" id="t-name">User</div><div class="turole" id="t-role">Role</div></div>
+      <button class="tbtn" id="logout-btn">Sign out</button>
+    </div>
+  </div>
+  <div class="layout">
+    <div class="sidebar" id="sidebar"></div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// STATE
+var S = {
+  token:null, user:null, pendingUserId:null, isLoginFlow:false, otpTimer:null, currentPage:'',
+  donations:[], listings:[], reports:[],
+  stats:{mealsToday:0,wasteKgToday:0,totalMeals:0,totalWasteKg:0,donors:0,volunteers:0,charities:0,hotspots:0,pendingDonations:0},
+  volMap:null, deliveryMap:null, photoMap:null, photoMarker:null, photoCoords:null
+};
+var selectedRole='';
+const ADMIN_CODE = 'HL-ADMIN-2024'; // The secret code — change this to whatever you want
+
+// Known beggar/destitute hotspots in Hyderabad
+const BEGGAR_HOTSPOTS = [
+  {name:'Bahadurpally Junction', lat:17.5615, lng:78.4245, demand:'Very High', people:80, type:'beggar'},
+  {name:'Secunderabad Station', lat:17.4399, lng:78.4983, demand:'High', people:120, type:'beggar'},
+  {name:'Kacheguda Station', lat:17.3868, lng:78.4886, demand:'High', people:90, type:'beggar'},
+  {name:'Mehdipatnam Bus Stand', lat:17.3919, lng:78.4282, demand:'Medium', people:60, type:'beggar'},
+  {name:'Charminar Area', lat:17.3616, lng:78.4747, demand:'High', people:100, type:'beggar'},
+  {name:'Hitech City Metro', lat:17.4474, lng:78.3762, demand:'Medium', people:45, type:'beggar'},
+  {name:'Dilsukhnagar Bus Stand', lat:17.3688, lng:78.5236, demand:'High', people:75, type:'beggar'},
+  {name:'Uppal X Roads', lat:17.4059, lng:78.5590, demand:'Medium', people:55, type:'beggar'}
+];
+const CHARITY_LOCATIONS = [
+  {name:'HungerLink Charity Hub – Kondapur', lat:17.4580, lng:78.3836, demand:'Accepts 150+ meals', type:'charity'},
+  {name:'Asha Kiran Shelter – Bowenpally', lat:17.4849, lng:78.4832, demand:'Accepts large batches', type:'charity'},
+  {name:'Sneha Sadan NGO – Moosapet', lat:17.4432, lng:78.4107, demand:'Up to 500 meals', type:'charity'},
+  {name:'People for Animals – Rajendranagar', lat:17.3262, lng:78.3936, demand:'Community kitchen', type:'charity'}
+];
+
+// API HELPER
+async function api(method,path,body){
+  var opts={method,headers:{'Content-Type':'application/json'}};
+  if(S.token) opts.headers['Authorization']='Bearer '+S.token;
+  if(body) opts.body=JSON.stringify(body);
+  try {
+    var res=await fetch('/api'+path,opts);
+    var data=await res.json();
+    if(!res.ok) throw new Error(data.error||'Request failed');
+    return data;
+  } catch(e){ throw new Error(e.message||'Network error'); }
+}
+
+// SCREEN HELPERS
+function showScreen(id){document.querySelectorAll('.abox').forEach(b=>b.classList.remove('visible'));var el=document.getElementById(id);if(el)el.classList.add('visible');}
+function showErr(id,msg){var el=document.getElementById(id);if(!el)return;el.textContent=msg;el.style.display='block';setTimeout(()=>{el.style.display='none';},4000);}
+function toast(msg,isErr){var t=document.getElementById('toast');t.textContent=msg;t.className='show'+(isErr?' err':'');clearTimeout(t._timer);t._timer=setTimeout(()=>{t.className='';},3500);}
+function setBtnLoading(btn,loading){if(loading){btn.disabled=true;btn._orig=btn.innerHTML;btn.innerHTML='<span class="spin"></span>Please wait...';}else{btn.disabled=false;btn.innerHTML=btn._orig||btn.innerHTML;}}
+
+// OTP TIMER
+function startOTPTimer(){clearInterval(S.otpTimer);var sec=30;var cd=document.getElementById('otp-cd');if(!cd)return;cd.textContent='30s';cd.style.cursor='default';cd.onclick=null;S.otpTimer=setInterval(()=>{sec--;if(sec<=0){clearInterval(S.otpTimer);cd.textContent='Resend OTP';cd.style.cursor='pointer';cd.style.color='var(--g)';cd.onclick=()=>resendOTP();}else{cd.textContent=sec+'s';}},1000);}
+async function resendOTP(){try{var data;if(S.isLoginFlow){var email=document.getElementById('login-email').value.trim();var mobile=document.getElementById('login-mobile').value.trim();data=await api('POST','/auth/login/send-otp',email?{email}:{mobile});}else{var name=document.getElementById('su-name').value.trim();var email=document.getElementById('su-email').value.trim();var mobile=document.getElementById('su-mobile').value.trim();data=await api('POST','/auth/signup/send-otp',{name,role:selectedRole,email:email||undefined,mobile:mobile||undefined});}S.pendingUserId=data.userId;if(data.demoOTP)document.getElementById('demo-otp-val').textContent=data.demoOTP;startOTPTimer();toast('OTP resent!');}catch(e){toast(e.message,true);}}
+function clearOTPInputs(){for(var i=0;i<6;i++){var el=document.getElementById('o'+i);if(el)el.value='';}var first=document.getElementById('o0');if(first)first.focus();}
+function getOTPValue(){var v='';for(var i=0;i<6;i++)v+=(document.getElementById('o'+i).value||'');return v;}
+
+// OTP navigation
+for(var _i=0;_i<6;_i++){(function(idx){document.addEventListener('DOMContentLoaded',function(){var inp=document.getElementById('o'+idx);if(!inp)return;inp.addEventListener('input',function(){this.value=this.value.replace(/[^0-9]/g,'').slice(-1);if(this.value&&idx<5)document.getElementById('o'+(idx+1)).focus();});inp.addEventListener('keydown',function(e){if(e.key==='Backspace'&&!this.value&&idx>0)document.getElementById('o'+(idx-1)).focus();});});}(_i));}
+
+// AUTH FLOW
+document.addEventListener('DOMContentLoaded',function(){
+  document.getElementById('land-signin-btn').addEventListener('click',()=>showScreen('s-login'));
+  document.getElementById('land-signup-btn').addEventListener('click',()=>showScreen('s-signup1'));
+  document.getElementById('login-back-land').addEventListener('click',()=>showScreen('s-land'));
+  document.getElementById('login-goto-signup').addEventListener('click',()=>showScreen('s-signup1'));
+
+  document.getElementById('login-email-tab').addEventListener('click',function(){this.classList.add('on');document.getElementById('login-mobile-tab').classList.remove('on');document.getElementById('login-email-wrap').style.display='block';document.getElementById('login-mobile-wrap').style.display='none';});
+  document.getElementById('login-mobile-tab').addEventListener('click',function(){this.classList.add('on');document.getElementById('login-email-tab').classList.remove('on');document.getElementById('login-email-wrap').style.display='none';document.getElementById('login-mobile-wrap').style.display='block';});
+
+  document.getElementById('login-otp-btn').addEventListener('click',async function(){
+    var email=document.getElementById('login-email').value.trim();var mobile=document.getElementById('login-mobile').value.trim();
+    var useEmail=document.getElementById('login-email-wrap').style.display!=='none';
+    if(useEmail&&!email){showErr('login-err','Please enter your email');return;}
+    if(!useEmail&&!mobile){showErr('login-err','Please enter your mobile');return;}
+    setBtnLoading(this,true);
+    try{var data=await api('POST','/auth/login/send-otp',useEmail?{email}:{mobile});S.pendingUserId=data.userId;S.isLoginFlow=true;if(data.demoOTP)document.getElementById('demo-otp-val').textContent=data.demoOTP;document.getElementById('otp-steps').innerHTML='<div class="step-dot done"></div><div class="step-dot active"></div>';document.getElementById('otp-sub').textContent='Enter the 6-digit code sent to '+(email||mobile);document.getElementById('otp-back').onclick=()=>showScreen('s-login');clearOTPInputs();showScreen('s-otp');startOTPTimer();}catch(e){showErr('login-err',e.message);}finally{setBtnLoading(this,false);}
+  });
+
+  document.getElementById('su1-goto-login').addEventListener('click',()=>showScreen('s-login'));
+  document.getElementById('su-email-tab').addEventListener('click',function(){this.classList.add('on');document.getElementById('su-mobile-tab').classList.remove('on');document.getElementById('su-email-wrap').style.display='block';document.getElementById('su-mobile-wrap').style.display='none';});
+  document.getElementById('su-mobile-tab').addEventListener('click',function(){this.classList.add('on');document.getElementById('su-email-tab').classList.remove('on');document.getElementById('su-email-wrap').style.display='none';document.getElementById('su-mobile-wrap').style.display='block';});
+  document.getElementById('su1-next-btn').addEventListener('click',function(){var name=document.getElementById('su-name').value.trim();var email=document.getElementById('su-email').value.trim();var mobile=document.getElementById('su-mobile').value.trim();var useEmail=document.getElementById('su-email-wrap').style.display!=='none';if(!name){showErr('su1-err','Please enter your full name');return;}if(useEmail&&!email){showErr('su1-err','Please enter your email');return;}if(!useEmail&&!mobile){showErr('su1-err','Please enter your mobile');return;}showScreen('s-signup2');});
+  document.getElementById('su2-back').addEventListener('click',()=>showScreen('s-signup1'));
+
+  document.querySelectorAll('.rcard').forEach(card=>{
+    card.addEventListener('click',function(){
+      document.querySelectorAll('.rcard').forEach(c=>c.classList.remove('sel'));
+      this.classList.add('sel');
+      selectedRole=this.getAttribute('data-role');
+      var adminWrap=document.getElementById('admin-access-code-wrap');
+      if(selectedRole==='__admin_access__'){adminWrap.style.display='block';}else{adminWrap.style.display='none';}
+    });
+  });
+
+  document.getElementById('su2-next-btn').addEventListener('click',async function(){
+    if(!selectedRole){showErr('su2-err','Please select your role');return;}
+    var actualRole=selectedRole;
+    if(selectedRole==='__admin_access__'){
+      var code=document.getElementById('admin-code-input').value.trim();
+      if(code!==ADMIN_CODE){showErr('su2-err','Invalid access code. Contact the platform owner.');return;}
+      actualRole='Administrator';
+    }
+    var name=document.getElementById('su-name').value.trim();var email=document.getElementById('su-email').value.trim();var mobile=document.getElementById('su-mobile').value.trim();var useEmail=document.getElementById('su-email-wrap').style.display!=='none';
+    setBtnLoading(this,true);
+    try{var payload={name,role:actualRole};if(useEmail)payload.email=email;else payload.mobile=mobile;var data=await api('POST','/auth/signup/send-otp',payload);S.pendingUserId=data.userId;S.isLoginFlow=false;if(data.demoOTP)document.getElementById('demo-otp-val').textContent=data.demoOTP;document.getElementById('otp-steps').innerHTML='<div class="step-dot done"></div><div class="step-dot done"></div><div class="step-dot active"></div>';document.getElementById('otp-sub').textContent='Step 3 of 3 — Enter the 6-digit code sent to '+(email||mobile);document.getElementById('otp-back').onclick=()=>showScreen('s-signup2');clearOTPInputs();showScreen('s-otp');startOTPTimer();}catch(e){showErr('su2-err',e.message);}finally{setBtnLoading(this,false);}
+  });
+
+  document.getElementById('otp-verify-btn').addEventListener('click',async function(){
+    var code=getOTPValue();if(code.length<6){showErr('otp-err','Please enter all 6 digits');return;}if(!S.pendingUserId){showErr('otp-err','Session expired, please start again');return;}setBtnLoading(this,true);
+    try{var endpoint=S.isLoginFlow?'/auth/login/verify-otp':'/auth/signup/verify-otp';var data=await api('POST',endpoint,{userId:S.pendingUserId,otp:code});S.token=data.token;S.user=data.user;localStorage.setItem('hl_token',S.token);localStorage.setItem('hl_user',JSON.stringify(S.user));clearInterval(S.otpTimer);launchApp();}catch(e){showErr('otp-err',e.message);}finally{setBtnLoading(this,false);}
+  });
+
+  document.getElementById('logout-btn').addEventListener('click',function(){S.token=null;S.user=null;localStorage.removeItem('hl_token');localStorage.removeItem('hl_user');document.getElementById('app-wrap').style.display='none';document.getElementById('auth-wrap').style.display='flex';showScreen('s-land');selectedRole='';document.querySelectorAll('.rcard').forEach(c=>c.classList.remove('sel'));document.getElementById('su-name').value='';document.getElementById('su-email').value='';document.getElementById('su-mobile').value='';document.getElementById('admin-access-code-wrap').style.display='none';});
+
+  var savedToken=localStorage.getItem('hl_token');var savedUser=localStorage.getItem('hl_user');
+  if(savedToken&&savedUser){try{S.token=savedToken;S.user=JSON.parse(savedUser);launchApp();}catch(e){localStorage.clear();}}
+});
+
+// APP LAUNCH
+function launchApp(){var u=S.user;document.getElementById('auth-wrap').style.display='none';document.getElementById('app-wrap').style.display='flex';document.getElementById('app-wrap').style.flexDirection='column';document.getElementById('t-avatar').textContent=initials(u.name);document.getElementById('t-name').textContent=u.name;document.getElementById('t-role').textContent=u.role;buildNav();navTo(defaultPage());toast('Welcome back, '+u.name+'!');}
+function initials(name){return(name||'U').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);}
+function defaultPage(){var r=S.user.role;if(r==='Restaurant / Food Donor')return 'donor-home';if(r==='Farmer')return 'farmer-home';if(r==='Volunteer')return 'vol-tasks';if(r==='Charity / Shelter')return 'charity-home';return 'admin-home';}
+
+// NAV CONFIG — Admin tabs updated
+var NAV_CONFIG={
+  'Restaurant / Food Donor':[
+    {label:'Overview',page:'donor-home',icon:'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'},
+    {label:'New Donation',page:'donor-new',icon:'M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z'},
+    {label:'Track Donations',page:'donor-track',icon:'M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 3.21-1.81 6-4.72 7.72L13 17v5h5l-1.22-1.22C19.91 19.07 22 15.76 22 12c0-5.18-3.95-9.45-9-9.95z'},
+    {label:'Leaderboard',page:'donor-board',icon:'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z'},
+    {label:'Order Produce',page:'donor-order',icon:'M19 6h-2c0-2.76-2.24-5-5-5S7 3.24 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z'}
+  ],
+  'Farmer':[
+    {label:'My Listings',page:'farmer-home',icon:'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'},
+    {label:'Add Produce',page:'farmer-add',icon:'M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z'},
+    {label:'Orders',page:'farmer-orders',icon:'M19 6h-2c0-2.76-2.24-5-5-5S7 3.24 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z'},
+    {label:'Market Prices',page:'farmer-prices',icon:'M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96C5 16.1 5.9 17 7 17h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63H19c.75 0 1.41-.41 1.75-1.03l3.58-6.49A1 1 0 0023.25 4H5.21l-.94-2H1z'}
+  ],
+  'Volunteer':[
+    {label:'Available Tasks',page:'vol-tasks',icon:'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'},
+    {label:'Active Task',page:'vol-active',icon:'M13 2.05v2.02c3.95.49 7 3.85 7 7.93 0 3.21-1.81 6-4.72 7.72L13 17v5h5l-1.22-1.22C19.91 19.07 22 15.76 22 12c0-5.18-3.95-9.45-9-9.95z'},
+    {label:'Delivery Proof',page:'vol-proof',icon:'M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z'},
+    {label:'Leaderboard',page:'vol-board',icon:'M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z'}
+  ],
+  'Charity / Shelter':[
+    {label:'Dashboard',page:'charity-home',icon:'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'},
+    {label:'Incoming Food',page:'charity-food',icon:'M19 6h-2c0-2.76-2.24-5-5-5S7 3.24 7 6H5c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z'},
+    {label:'Report Need',page:'charity-report',icon:'M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z'}
+  ],
+  'Administrator':[
+    {label:'Overview',page:'admin-home',icon:'M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z'},
+    {label:'Volunteers',page:'admin-volunteers',icon:'M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3z'},
+    {label:'Verifications',page:'admin-verify',icon:'M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z'},
+    {label:'Reports',page:'admin-reports',icon:'M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z'},
+    {label:'Hotspot Map',page:'admin-map',icon:'M20.5 3l-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5z'}
+  ]
+};
+
+function buildNav(){
+  var u=S.user;var role=u.role;
+  var items=(NAV_CONFIG[role]||[]);
+  var topNav=document.getElementById('top-nav');
+  var sidebar=document.getElementById('sidebar');
+  topNav.innerHTML='';sidebar.innerHTML='';
+  items.forEach(item=>{
+    var btn=document.createElement('button');
+    btn.className='tnav-btn';btn.textContent=item.label;btn.id='nb-'+item.page;
+    btn.addEventListener('click',()=>navTo(item.page));
+    topNav.appendChild(btn);
+    var si=document.createElement('div');
+    si.className='sitem';si.id='sb-'+item.page;
+    si.innerHTML='<svg viewBox="0 0 24 24" width="15" height="15"><path d="'+item.icon+'"/></svg>'+item.label;
+    si.addEventListener('click',()=>navTo(item.page));
+    sidebar.appendChild(si);
+  });
+}
+
+function navTo(page){
+  S.currentPage=page;
+  document.querySelectorAll('.tnav-btn,.sitem').forEach(b=>b.classList.remove('on'));
+  var nb=document.getElementById('nb-'+page);var sb=document.getElementById('sb-'+page);
+  if(nb)nb.classList.add('on');if(sb)sb.classList.add('on');
+  renderPage(page);
+}
+
+async function renderPage(page){
+  var el=document.getElementById('content');
+  el.innerHTML='<div style="padding:2rem;text-align:center;color:var(--t3)"><span class="spin" style="border-top-color:var(--g);border-color:rgba(29,158,117,.2)"></span></div>';
+  try{
+    switch(page){
+      case 'donor-home': el.innerHTML=await pageDonorHome(); break;
+      case 'donor-new': el.innerHTML=pageDonorNew(); bindDonorNew(); break;
+      case 'donor-track': el.innerHTML=await pageDonorTrack(); break;
+      case 'donor-board': el.innerHTML=await pageDonorBoard(); break;
+      case 'donor-order': el.innerHTML=await pageDonorOrder(); bindDonorOrder(); break;
+      case 'farmer-home': el.innerHTML=await pageFarmerHome(); break;
+      case 'farmer-add': el.innerHTML=pageFarmerAdd(); bindFarmerAdd(); break;
+      case 'farmer-orders': el.innerHTML=pageFarmerOrders(); break;
+      case 'farmer-prices': el.innerHTML=pageFarmerPrices(); break;
+      case 'vol-tasks': el.innerHTML=await pageVolTasks(); bindVolTasks(); break;
+      case 'vol-active': el.innerHTML=await pageVolActive(); bindVolActive(); break;
+      case 'vol-proof': el.innerHTML=pageVolProof(); bindVolProof(); break;
+      case 'vol-board': el.innerHTML=pageVolBoard(); break;
+      case 'charity-home': el.innerHTML=await pageCharityHome(); break;
+      case 'charity-food': el.innerHTML=await pageCharityFood(); break;
+      case 'charity-report': el.innerHTML=pageCharityReport(); bindCharityReport(); break;
+      case 'admin-home': el.innerHTML=await pageAdminHome(); break;
+      case 'admin-volunteers': el.innerHTML=pageAdminVolunteers(); break;
+      case 'admin-verify': el.innerHTML=pageAdminVerify(); break;
+      case 'admin-reports': el.innerHTML=await pageAdminReports(); bindAdminReports(); break;
+      case 'admin-map': el.innerHTML=pageAdminMap(); setTimeout(initAdminMap,100); break;
+      default: el.innerHTML='<div class="empty"><p>Page not found</p></div>';
+    }
+  }catch(e){el.innerHTML='<div class="card"><div class="empty"><p>Error loading page: '+e.message+'</p></div></div>';console.error(e);}
+}
+
+// SHARED HELPERS
+function renderTimeline(steps,currentStatus){
+  var statusMap={'Pending':0,'Volunteer Assigned':1,'Picked Up':2,'Delivered':3,'Cancelled':4};
+  var idx=statusMap[currentStatus]!==undefined?statusMap[currentStatus]:0;
+  return '<div class="tline">'+steps.map((s,i)=>{var cls=i<idx?'dn':(i===idx?'ac':'pd');return '<div class="ts">'+(i<steps.length-1?'<div class="tl-line"></div>':'')+'<div class="tdot '+cls+'">'+(i+1)+'</div><div class="tlb">'+s+'</div></div>';}).join('')+'</div>';
+}
+function renderEmptyState(msg,action){return '<div class="empty"><svg viewBox="0 0 24 24"><path d="M11 9H9V2H7v7H5V2H3v7c0 2.12 1.66 3.84 3.75 3.97V22h2.5v-9.03C11.34 12.84 13 11.12 13 9V2h-2v7zm5-3v8h2.5v8H21V2c-2.76 0-5 2.24-5 4z"/></svg><p>'+msg+(action?' <a onclick="navTo(\''+action.page+'\')">'+action.label+'</a>':'')+'</p></div>';}
+function shelfBadge(priority){if(priority==='High')return '<span class="badge c">High Priority</span>';if(priority==='Low')return '<span class="badge g">Low Priority</span>';return '<span class="badge a">Medium Priority</span>';}
+function statusBadge(s){if(s==='Delivered')return '<span class="badge g">'+s+'</span>';if(s==='Picked Up')return '<span class="badge a">'+s+'</span>';if(s==='Volunteer Assigned')return '<span class="badge b">'+s+'</span>';if(s==='Cancelled')return '<span class="badge gy">'+s+'</span>';return '<span class="badge gy">'+s+'</span>';}
+
+// AI DESTINATION LOGIC
+function getAIDestination(quantity){
+  var qty=parseInt(quantity)||0;
+  if(qty>=150){
+    var charity=CHARITY_LOCATIONS[Math.floor(Math.random()*CHARITY_LOCATIONS.length)];
+    return {type:'charity',qty,dest:charity,reason:'Quantity ≥ 150 meals — Large batch best served via registered charity partners for maximum community impact.',color:'bl',icon:'🏠',routeFrom:'Restaurant',routeTo:charity.name,lat:charity.lat,lng:charity.lng};
+  } else {
+    var spot=BEGGAR_HOTSPOTS.sort((a,b)=>{var d={'Very High':4,'High':3,'Medium':2,'Low':1};return d[b.demand]-d[a.demand];})[0];
+    return {type:'beggar',qty,dest:spot,reason:'Quantity < 150 meals — AI identified '+spot.name+' as the highest-demand area for direct street distribution in Hyderabad.',color:'c',icon:'📍',routeFrom:'Restaurant',routeTo:spot.name,lat:spot.lat,lng:spot.lng};
+  }
+}
+
+// DONOR PAGES
+async function pageDonorHome(){
+  var donations=[];var stats=S.stats;
+  try{var r=await api('GET','/donations');donations=r.donations;S.donations=donations;var sr=await api('GET','/donations/stats/platform');stats=sr;S.stats=sr;}catch(e){}
+  var myMeals=donations.reduce((a,d)=>a+(d.quantity||0),0);
+  var delivered=donations.filter(d=>d.status==='Delivered').length;
+  return '<div class="ptitle">Donor Dashboard</div><div class="psub">Welcome back, '+S.user.name+'</div>'+
+    '<div class="sgrid">'+
+      '<div class="scard"><div class="slb">My meals donated</div><div class="sval g">'+myMeals+'</div></div>'+
+      '<div class="scard"><div class="slb">Total donations</div><div class="sval">'+donations.length+'</div></div>'+
+      '<div class="scard"><div class="slb">Completed</div><div class="sval g">'+delivered+'</div></div>'+
+      '<div class="scard"><div class="slb">Platform meals today</div><div class="sval g">'+stats.mealsToday+'</div></div>'+
+    '</div>'+
+    '<div class="aib"><div class="ail">🤖 AI Prediction</div><div class="ait">Based on your donation history, you typically have surplus food around <strong>9–10 PM</strong>. Volunteers will be pre-alerted 30 minutes before your usual donation time.</div></div>'+
+    '<div class="card"><div class="ch"><div class="ct">Recent donations</div><button class="abtn ag" onclick="navTo(\'donor-new\')">+ New donation</button></div>'+
+    (donations.length===0?renderEmptyState('No donations yet.',{page:'donor-new',label:'Create your first donation →'}):
+      donations.slice(0,4).reverse().map(d=>'<div class="row"><div class="rl"><div class="dot '+(d.status==='Delivered'?'g':d.status==='Cancelled'?'gy':'a')+'"></div><div><div class="in">'+d.foodType+' · '+d.quantity+' meals</div><div class="is">'+d.pickupDeadline+' · '+(d.donorLocation||'—')+'</div></div></div>'+statusBadge(d.status)+'</div>').join(''))+'</div>';
+}
+
+function pageDonorNew(){
+  return '<div class="ptitle">New Donation</div><div class="psub">Fill in details of your surplus food</div>'+
+    '<div class="card">'+
+      '<div class="ct" style="margin-bottom:.9rem">Donation details</div>'+
+      '<div class="fg2">'+
+        '<div class="fg"><label class="fl">Food type</label><select class="fi" id="d-type"><option>Cooked Rice &amp; Curry</option><option>Biryani</option><option>Bread &amp; Snacks</option><option>Sweets &amp; Desserts</option><option>Roti / Chapati</option><option>Mixed Meals</option></select></div>'+
+        '<div class="fg"><label class="fl">Quantity (meals)</label><input class="fi" type="number" id="d-qty" placeholder="e.g. 80" min="1"></div>'+
+        '<div class="fg"><label class="fl">Preparation time</label><input class="fi" type="text" id="d-prep" placeholder="e.g. 7:30 PM today"></div>'+
+        '<div class="fg"><label class="fl">Pickup deadline</label><input class="fi" type="text" id="d-deadline" placeholder="e.g. 9:00 PM today"></div>'+
+        '<div class="fg"><label class="fl">Packaging condition</label><select class="fi" id="d-pack"><option>Sealed containers</option><option>Foil wrapped</option><option>Disposable boxes</option><option>Open trays</option></select></div>'+
+        '<div class="fg"><label class="fl">Storage condition</label><select class="fi" id="d-store"><option>Room temperature</option><option>Refrigerated</option><option>Hot box</option></select></div>'+
+      '</div>'+
+      '<div class="fg"><label class="fl">Pickup location / address</label><input class="fi" type="text" id="d-loc" placeholder="Restaurant address or landmark"></div>'+
+    '</div>'+
+    '<div class="card">'+
+      '<div class="ct" style="margin-bottom:.7rem">Food safety checklist</div>'+
+      '<div class="chkitem"><div class="chkbox"><svg width="10" height="8" fill="none" stroke="#1D9E75" stroke-width="2.5"><path d="M1 4l3 3 5-6"/></svg></div>Containers are sealed and hygienic</div>'+
+      '<div class="chkitem"><div class="chkbox"><svg width="10" height="8" fill="none" stroke="#1D9E75" stroke-width="2.5"><path d="M1 4l3 3 5-6"/></svg></div>Preparation time is labeled on packaging</div>'+
+      '<div class="chkitem"><div class="chkbox"><svg width="10" height="8" fill="none" stroke="#1D9E75" stroke-width="2.5"><path d="M1 4l3 3 5-6"/></svg></div>Food prepared within the last 4 hours</div>'+
+      '<div class="chkitem"><div class="chkbox"><svg width="10" height="8" fill="none" stroke="#1D9E75" stroke-width="2.5"><path d="M1 4l3 3 5-6"/></svg></div>No visible contamination or spoilage</div>'+
+      '<div style="margin-top:.85rem;display:flex;align-items:center;gap:8px">'+
+        '<input type="checkbox" id="d-safety" style="width:16px;height:16px;accent-color:var(--g)">'+
+        '<label for="d-safety" style="font-size:.85rem;cursor:pointer">I confirm this food meets all safety requirements</label>'+
+      '</div>'+
+    '</div>'+
+    '<div id="ai-shelf" style="display:none"></div>'+
+    '<div class="err-txt" id="d-err">Please fill all required fields</div>'+
+    '<div style="display:flex;gap:9px">'+
+      '<button class="abtn ao" id="d-estimate-btn">AI Shelf Estimate</button>'+
+      '<button class="abtn ag" id="d-submit-btn">Submit Donation</button>'+
+    '</div>';
+}
+
+function bindDonorNew(){
+  document.getElementById('d-estimate-btn').addEventListener('click',function(){
+    var type=document.getElementById('d-type').value;var store=document.getElementById('d-store').value;
+    var hours=store.includes('Refrigerat')?6:store.includes('Hot')?3:2;var p=hours<=2?'High':hours>=5?'Low':'Medium';
+    document.getElementById('ai-shelf').style.display='block';
+    document.getElementById('ai-shelf').innerHTML='<div class="aib"><div class="ail">🤖 AI Shelf Life Estimate</div><div class="ait">Based on <strong>'+type+'</strong> stored at <strong>'+store+'</strong> — safe consumption window is approximately <strong>'+hours+' hours</strong>. '+shelfBadge(p)+' — Nearest volunteers will be notified immediately.</div></div>';
+  });
+  document.getElementById('d-submit-btn').addEventListener('click',async function(){
+    var type=document.getElementById('d-type').value;var qty=document.getElementById('d-qty').value;var deadline=document.getElementById('d-deadline').value.trim();var loc=document.getElementById('d-loc').value.trim();var safety=document.getElementById('d-safety').checked;var pack=document.getElementById('d-pack').value;var store=document.getElementById('d-store').value;var prep=document.getElementById('d-prep').value;
+    if(!qty||parseInt(qty)<1){document.getElementById('d-err').style.display='block';document.getElementById('d-err').textContent='Please enter a valid quantity';return;}
+    if(!deadline){document.getElementById('d-err').style.display='block';document.getElementById('d-err').textContent='Please enter pickup deadline';return;}
+    if(!safety){document.getElementById('d-err').style.display='block';document.getElementById('d-err').textContent='Please confirm the food safety checklist';return;}
+    setBtnLoading(this,true);
+    try{await api('POST','/donations',{foodType:type,quantity:qty,preparationTime:prep,pickupDeadline:deadline,packagingCondition:pack,storageCondition:store,location:loc,safetyChecked:true});toast('Donation submitted! Volunteers notified.');navTo('donor-track');}catch(e){document.getElementById('d-err').style.display='block';document.getElementById('d-err').textContent=e.message;setBtnLoading(this,false);}
+  });
+}
+
+async function pageDonorTrack(){
+  var donations=[];
+  try{var r=await api('GET','/donations');donations=r.donations;S.donations=donations;}catch(e){}
+  var steps=['Created','Volunteer Assigned','Picked Up','Delivered'];
+  if(!donations.length)return '<div class="ptitle">Track Donations</div><div class="psub">Real-time donation status</div><div class="card">'+renderEmptyState('No donations yet.',{page:'donor-new',label:'Create your first donation →'})+'</div>';
+  return '<div class="ptitle">Track Donations</div><div class="psub">Real-time donation status</div>'+
+    donations.slice().reverse().map(d=>'<div class="card"><div class="ch"><div><div class="ct">'+d.foodType+' · '+d.quantity+' meals</div><div class="is" style="font-size:.75rem;color:var(--t3)">'+(d.donorLocation||'—')+' · '+d.pickupDeadline+'</div></div>'+statusBadge(d.status)+'</div>'+
+      renderTimeline(steps,d.status)+
+      (d.assignedVolunteerName?'<div style="font-size:.8rem;color:var(--t2);margin-bottom:.6rem">Volunteer: <strong>'+d.assignedVolunteerName+'</strong></div>':'')+
+      (d.status==='Pending'?'<button class="abtn ar" data-did="'+d._id+'" style="font-size:.78rem;padding:6px 13px">Cancel donation</button>':'')+
+    '</div>').join('');
+}
+
+async function pageDonorBoard(){
+  var donations=[];try{var r=await api('GET','/donations');donations=r.donations;}catch(e){}
+  var myTotal=donations.reduce((a,d)=>a+d.quantity,0);
+  var sample=[{n:'Green Garden Restaurant',meals:950+myTotal,badge:'Hunger Hero Partner'},{n:'City Palace Hotel',meals:820,badge:'Verified Food Donor'},{n:'Sunrise Caterers',meals:710,badge:'Community Impact'},{n:'Golconda Caterers',meals:590,badge:'Active Donor'}];
+  sample.sort((a,b)=>b.meals-a.meals);
+  var medalCls=['m1','m2','m3','m0'];
+  return '<div class="ptitle">Leaderboard</div><div class="psub">Top food donors this month · Ranked by meals donated</div>'+
+    '<div class="card">'+sample.map((r,i)=>'<div class="row"><div class="rl"><div class="medal '+medalCls[i]+'">'+(i+1)+'</div><div><div class="in">'+r.n+'</div><div class="is"><span class="badge g" style="font-size:.65rem">'+r.badge+'</span></div></div></div><div style="font-family:Sora,sans-serif;font-weight:700;font-size:1.05rem;color:var(--g)">'+r.meals.toLocaleString()+'</div></div>').join('')+'</div>';
+}
+
+async function pageDonorOrder(){
+  var listings=[];try{var r=await api('GET','/farmers');listings=r.listings;S.listings=listings;}catch(e){}
+  return '<div class="ptitle">Order from Farmers</div><div class="psub">Direct farm-to-restaurant supply</div>'+
+    (listings.length===0?'<div class="card">'+renderEmptyState('No farmer listings available yet.')+'</div>':
+    listings.map((l,i)=>'<div class="frow"><div><div class="in">'+l.product+' <span class="badge gy" style="font-size:.65rem">'+l.category+'</span></div><div class="is">'+l.quantity+' kg · '+l.location+' · Harvested: '+l.harvestDate+'</div></div><div style="display:flex;align-items:center;gap:8px"><span class="badge '+(l.pricePerKg>0?'g':'a')+'">'+(l.pricePerKg>0?'₹'+l.pricePerKg+'/kg':'Free / Donate')+'</span><button class="abtn ag" style="font-size:.75rem;padding:5px 11px" data-lid="'+l._id+'">Order</button></div></div>').join(''));
+}
+function bindDonorOrder(){document.querySelectorAll('[data-lid]').forEach(btn=>{btn.addEventListener('click',async function(){var id=this.getAttribute('data-lid');try{await api('POST','/farmers/'+id+'/order',{});toast('Order request sent to farmer!');}catch(e){toast(e.message,true);}});});}
+
+document.addEventListener('click',async function(e){
+  if(e.target.matches('[data-did]')){var id=e.target.getAttribute('data-did');if(!confirm('Cancel this donation?'))return;try{await api('DELETE','/donations/'+id);toast('Donation cancelled');navTo('donor-track');}catch(er){toast(er.message,true);}}
+});
+
+// FARMER PAGES
+async function pageFarmerHome(){
+  var listings=[];try{var r=await api('GET','/farmers');listings=r.listings;S.listings=listings;}catch(e){}
+  var totalKg=listings.reduce((a,l)=>a+l.quantity,0);
+  return '<div class="ptitle">My Produce Listings</div><div class="psub">Manage your surplus farm produce</div>'+
+    '<div class="farmer-stat-band"><div class="fsb-left"><h3>Farm Dashboard</h3><p>Active listings · Market connect</p></div><div class="fsb-nums"><div class="fsb-num"><div class="fsb-num-val">'+listings.length+'</div><div class="fsb-num-label">Listings</div></div><div class="fsb-num"><div class="fsb-num-val">'+totalKg+'</div><div class="fsb-num-label">Total kg</div></div><div class="fsb-num"><div class="fsb-num-val">₹'+Math.floor(totalKg*22).toLocaleString()+'</div><div class="fsb-num-label">Est. value</div></div></div></div>'+
+    '<div class="aib"><div class="ail">🤖 Market Insight</div><div class="ait">Tomatoes & Onions are in high demand this week from restaurant partners. Rice and wheat requests have increased 34% compared to last month. Consider listing more grains for better reach.</div></div>'+
+    '<div class="card"><div class="ch"><div class="ct">Listings</div><button class="abtn ag" onclick="navTo(\'farmer-add\')">+ Add produce</button></div>'+
+    (listings.length===0?renderEmptyState('No listings yet.',{page:'farmer-add',label:'Add your first produce →'}):
+    listings.map(l=>'<div class="frow"><div><div class="in">'+l.product+'</div><div class="is">'+l.quantity+' kg · '+l.location+' · Harvested: '+l.harvestDate+'</div></div><div style="display:flex;align-items:center;gap:8px"><span class="badge '+(l.pricePerKg>0?'g':'a')+'">'+(l.pricePerKg>0?'₹'+l.pricePerKg+'/kg':'Free')+'</span><button class="abtn ar" style="font-size:.72rem;padding:5px 10px" data-remove="'+l._id+'">Remove</button></div></div>').join(''))+'</div>';
+}
+
+function pageFarmerAdd(){
+  return '<div class="ptitle">Add Produce</div><div class="psub">List your surplus farm produce for sale or donation</div>'+
+    '<div class="card"><div class="fg2">'+
+      '<div class="fg"><label class="fl">Product name</label><input class="fi" id="f-product" placeholder="e.g. Tomatoes"></div>'+
+      '<div class="fg"><label class="fl">Category</label><select class="fi" id="f-cat"><option>Vegetables</option><option>Fruits</option><option>Grains</option><option>Pulses</option><option>Dairy</option></select></div>'+
+      '<div class="fg"><label class="fl">Available quantity (kg)</label><input class="fi" type="number" id="f-qty" placeholder="200" min="0.1" step="0.1"></div>'+
+      '<div class="fg"><label class="fl">Price ₹/kg (blank = free donation)</label><input class="fi" type="number" id="f-price" placeholder="e.g. 20" min="0"></div>'+
+      '<div class="fg"><label class="fl">Harvest date</label><input class="fi" id="f-date" placeholder="e.g. Today"></div>'+
+      '<div class="fg"><label class="fl">Farm location</label><input class="fi" id="f-loc" placeholder="District / Village"></div>'+
+    '</div>'+
+    '<div class="fg"><label class="fl">Additional notes</label><input class="fi" id="f-notes" placeholder="Quality, grade, or special conditions"></div>'+
+    '<div class="err-txt" id="f-err">Please fill required fields</div>'+
+    '<button class="abtn ag" id="f-submit-btn">List Produce</button></div>';
+}
+
+function bindFarmerAdd(){
+  document.getElementById('f-submit-btn').addEventListener('click',async function(){
+    var product=document.getElementById('f-product').value.trim();var qty=document.getElementById('f-qty').value;
+    if(!product){document.getElementById('f-err').textContent='Please enter product name';document.getElementById('f-err').style.display='block';return;}
+    if(!qty||parseFloat(qty)<0.1){document.getElementById('f-err').textContent='Please enter valid quantity';document.getElementById('f-err').style.display='block';return;}
+    setBtnLoading(this,true);
+    try{await api('POST','/farmers',{product,category:document.getElementById('f-cat').value,quantity:qty,pricePerKg:document.getElementById('f-price').value||0,harvestDate:document.getElementById('f-date').value||'Today',location:document.getElementById('f-loc').value,notes:document.getElementById('f-notes').value});toast('Produce listed successfully!');navTo('farmer-home');}catch(e){document.getElementById('f-err').textContent=e.message;document.getElementById('f-err').style.display='block';setBtnLoading(this,false);}
+  });
+}
+
+function pageFarmerOrders(){return '<div class="ptitle">Orders Received</div><div class="psub">Restaurant and charity orders for your produce</div><div class="card">'+renderEmptyState('No orders yet. Orders will appear here when restaurants request your produce.')+'</div>';}
+
+function pageFarmerPrices(){
+  var prices=[
+    {item:'Tomatoes',price:'₹35–42/kg',trend:'up',change:'+12%'},
+    {item:'Onions',price:'₹28–35/kg',trend:'up',change:'+8%'},
+    {item:'Rice (Raw)',price:'₹40–48/kg',trend:'stable',change:'0%'},
+    {item:'Wheat',price:'₹26–30/kg',trend:'down',change:'-3%'},
+    {item:'Potatoes',price:'₹22–28/kg',trend:'stable',change:'+1%'},
+    {item:'Green Chilli',price:'₹55–70/kg',trend:'up',change:'+22%'},
+    {item:'Ginger',price:'₹90–110/kg',trend:'down',change:'-7%'},
+    {item:'Spinach',price:'₹18–25/kg',trend:'stable',change:'+2%'}
+  ];
+  return '<div class="ptitle">Market Prices</div><div class="psub">Today\'s mandi rates · Hyderabad region</div>'+
+    '<div class="aib"><div class="ail">🤖 AI Market Alert</div><div class="ait">Green chilli prices are at a seasonal high (+22%). If you have surplus, now is a good time to list. Ginger prices are falling — consider early listing to maximise returns.</div></div>'+
+    '<div class="card"><div class="ct" style="margin-bottom:.9rem">Live Mandi Rates</div>'+
+    prices.map(p=>'<div class="row"><div class="rl"><div class="in">'+p.item+'</div></div><div style="display:flex;align-items:center;gap:10px"><span style="font-size:.8rem;color:var(--t2)">'+p.price+'</span><span class="badge '+(p.trend==='up'?'c':p.trend==='down'?'b':'g')+'">'+p.change+'</span></div></div>').join('')+'</div>';
+}
+
+document.addEventListener('click',async function(e){if(e.target.matches('[data-remove]')){var id=e.target.getAttribute('data-remove');if(!confirm('Remove this listing?'))return;try{await api('DELETE','/farmers/'+id);toast('Listing removed');navTo('farmer-home');}catch(er){toast(er.message,true);}}});
+
+// VOLUNTEER PAGES
+async function pageVolTasks(){
+  var donations=[];
+  try{var r=await api('GET','/donations');donations=r.donations.filter(d=>d.status==='Pending');}catch(e){}
+  var totalMe=(S.user.profile&&S.user.profile.totalMealsDelivered)||0;
+  var deliveries=(S.user.profile&&S.user.profile.totalDeliveries)||0;
+  return '<div class="ptitle">Available Tasks</div><div class="psub">Pickup requests near you · Accept to lock the task</div>'+
+    '<div class="sgrid"><div class="scard"><div class="slb">Meals delivered (you)</div><div class="sval g">'+totalMe+'</div></div><div class="scard"><div class="slb">Tasks completed</div><div class="sval">'+deliveries+'</div></div><div class="scard"><div class="slb">Reliability score</div><div class="sval">'+((S.user.profile&&S.user.profile.reliabilityScore)||'—')+'%</div></div></div>'+
+    (donations.length===0?'<div class="card">'+renderEmptyState('No pickup tasks available right now. Check back soon!')+'</div>':
+    donations.map(d=>{
+      var pColor=d.aiPriority==='High'?'c':d.aiPriority==='Low'?'g':'a';
+      var aiDest=getAIDestination(d.quantity);
+      return '<div class="urgitem" style="flex-direction:column;align-items:stretch;gap:10px">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between">'+
+          '<div><div style="display:flex;align-items:center;gap:7px;margin-bottom:4px"><span class="badge '+pColor+'">'+(d.aiPriority||'Medium')+' Priority</span><span class="in">'+d.foodType+'</span></div>'+
+          '<div class="is">'+d.quantity+' meals · '+(d.donorLocation||'—')+'</div>'+
+          '<div class="is">Deadline: '+d.pickupDeadline+'</div></div>'+
+          '<button class="abtn ag" style="font-size:.78rem;padding:7px 13px" data-accept="'+d._id+'">Accept Task</button>'+
+        '</div>'+
+        '<div class="ai-dest-box" style="margin:0">'+
+          '<div class="ai-dest-title">🤖 AI Delivery Suggestion <span class="ai-dest-badge">'+(aiDest.type==='charity'?'→ Charity':'→ Street Distribution')+'</span></div>'+
+          '<div class="ai-dest-row"><div class="ai-dest-label">Deliver to</div><div class="ai-dest-val">'+aiDest.dest.name+'</div></div>'+
+          '<div class="ai-dest-row"><div class="ai-dest-label">Reason</div><div class="ai-dest-val" style="font-size:.78rem;font-weight:400;color:var(--t2)">'+aiDest.reason+'</div></div>'+
+          '<div class="ai-dest-row"><div class="ai-dest-label">Estimated people</div><div class="ai-dest-val">~'+aiDest.dest.people+' people</div></div>'+
+        '</div>'+
+      '</div>';
+    }).join(''));
+}
+
+function bindVolTasks(){
+  document.querySelectorAll('[data-accept]').forEach(btn=>{
+    btn.addEventListener('click',async function(){
+      var id=this.getAttribute('data-accept');setBtnLoading(this,true);
+      try{await api('PATCH','/donations/'+id+'/status',{status:'Volunteer Assigned'});toast('Task accepted! AI route is ready.');navTo('vol-active');}catch(e){toast(e.message,true);setBtnLoading(this,false);}
+    });
+  });
+}
+
+async function pageVolActive(){
+  var active=null;
+  try{var r=await api('GET','/donations');active=r.donations.find(d=>(d.status==='Volunteer Assigned'||d.status==='Picked Up')&&d.assignedVolunteer===S.user.id);if(!active)active=r.donations.find(d=>d.status==='Volunteer Assigned'||d.status==='Picked Up');}catch(e){}
+  if(!active)return '<div class="ptitle">Active Task</div><div class="psub">Your current pickup assignment</div><div class="card">'+renderEmptyState('No active task.',{page:'vol-tasks',label:'Browse available tasks →'})+'</div>';
+
+  var aiDest=getAIDestination(active.quantity);
+  var stepStates=['done','done','active','pending'];
+  if(active.status==='Picked Up') stepStates=['done','done','done','active'];
+
+  var stepsHtml='<div class="vol-steps">'+
+    ['Assigned','En Route','Picked Up','Delivering'].map((s,i)=>'<div class="vol-step '+stepStates[i]+'"><div class="vol-step-dot">'+(stepStates[i]==='done'?'✓':(i+1))+'</div><div class="vol-step-label">'+s+'</div></div>').join('')+
+  '</div>';
+
+  return '<div class="ptitle">Active Task</div><div class="psub">'+active.foodType+' · '+active.quantity+' meals</div>'+
+    '<div class="card">'+
+      '<div class="ch"><div class="ct">Task #'+active._id.slice(-6).toUpperCase()+'</div><span class="badge a">In Progress</span></div>'+
+      stepsHtml+
+      '<div style="font-size:.83rem;color:var(--t2);margin-bottom:.9rem">📍 Pickup: <strong>'+(active.donorLocation||'—')+'</strong> · ⏰ Deadline: <strong>'+active.pickupDeadline+'</strong></div>'+
+    '</div>'+
+
+    '<div class="ai-dest-box">'+
+      '<div class="ai-dest-title">🤖 AI Delivery Decision <span class="ai-dest-badge">'+(aiDest.type==='charity'?'CHARITY DELIVERY':'STREET DISTRIBUTION')+'</span></div>'+
+      '<div class="ai-dest-row"><div class="ai-dest-label">Quantity</div><div class="ai-dest-val">'+active.quantity+' meals '+(active.quantity>=150?'(≥ 150 → Charity)':'(< 150 → Street distribution)')+'</div></div>'+
+      '<div class="ai-dest-row"><div class="ai-dest-label">Deliver to</div><div class="ai-dest-val">'+aiDest.dest.name+'</div></div>'+
+      '<div class="ai-dest-row"><div class="ai-dest-label">People served</div><div class="ai-dest-val">~'+aiDest.dest.people+' people</div></div>'+
+      '<div class="ai-dest-row"><div class="ai-dest-label">Reason</div><div class="ai-dest-val" style="font-size:.78rem;font-weight:400;color:var(--t2)">'+aiDest.reason+'</div></div>'+
+    '</div>'+
+
+    '<div class="route-info">'+
+      '<div class="route-info-icon">🗺️</div>'+
+      '<div class="route-info-text">Route: <strong>'+(active.donorLocation||'Restaurant')+'</strong> → <strong>'+aiDest.dest.name+'</strong><br>Tap "Open Route on Maps" to navigate</div>'+
+    '</div>'+
+
+    '<div class="map-container" style="margin-bottom:.85rem">'+
+      '<div id="vol-map"></div>'+
+      '<div class="map-overlay">'+
+        '<strong>'+aiDest.dest.name+'</strong>'+
+        '<span class="popup-sub">'+(aiDest.type==='charity'?aiDest.dest.demand:aiDest.dest.demand+' demand area')+'</span>'+
+      '</div>'+
+    '</div>'+
+
+    '<div style="display:flex;gap:8px;flex-wrap:wrap">'+
+      (active.status==='Volunteer Assigned'?'<button class="abtn ag" id="v-pickup-btn" data-vid="'+active._id+'">✅ Confirm Pickup</button>':'')+
+      (active.status==='Picked Up'?'<button class="abtn ag" id="v-deliver-btn" data-vid="'+active._id+'">✅ Confirm Delivery</button>':'')+
+      '<button class="abtn ab" onclick="openMapsRoute(\''+aiDest.lat+'\',\''+aiDest.lng+'\')">🗺️ Open Route on Maps</button>'+
+      '<button class="abtn ao" onclick="navTo(\'vol-proof\')">📷 Upload Delivery Photo</button>'+
+    '</div>'+
+    '<div id="vol-active-msg" class="err-txt" style="display:none"></div>';
+}
+
+function openMapsRoute(lat,lng){
+  var url='https://www.google.com/maps/dir/?api=1&destination='+lat+','+lng+'&travelmode=driving';
+  window.open(url,'_blank');
+  toast('Opening route in Google Maps...');
+}
+
+function bindVolActive(){
+  var pb=document.getElementById('v-pickup-btn');var db=document.getElementById('v-deliver-btn');
+  if(pb)pb.addEventListener('click',async function(){var id=this.getAttribute('data-vid');setBtnLoading(this,true);try{await api('PATCH','/donations/'+id+'/status',{status:'Picked Up'});toast('Pickup confirmed! Now navigate to delivery location.');navTo('vol-active');}catch(e){toast(e.message,true);setBtnLoading(this,false);}});
+  if(db)db.addEventListener('click',async function(){var id=this.getAttribute('data-vid');setBtnLoading(this,true);try{await api('PATCH','/donations/'+id+'/status',{status:'Delivered',mealsServed:null});toast('Delivery confirmed! Great work! Now upload proof photo.');navTo('vol-proof');}catch(e){toast(e.message,true);setBtnLoading(this,false);}});
+  // Init map after DOM is ready
+  setTimeout(()=>initVolMap(),200);
+}
+
+function initVolMap(){
+  var mapEl=document.getElementById('vol-map');
+  if(!mapEl||S.volMap)return;
+  try{
+    var map=L.map('vol-map',{zoomControl:true,scrollWheelZoom:false}).setView([17.4399,78.4983],12);
+    S.volMap=map;
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:18}).addTo(map);
+
+    // Donor pin (simulated)
+    var donorIcon=L.divIcon({html:'<div style="background:#1D9E75;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3)">🍽️</div>',iconSize:[32,32],iconAnchor:[16,16],className:''});
+    L.marker([17.4399,78.4983],{icon:donorIcon}).addTo(map).bindPopup('<div class="popup-title">Pickup Location</div><div class="popup-sub">Restaurant / Food Donor</div>');
+
+    // Beggar hotspots
+    BEGGAR_HOTSPOTS.forEach(spot=>{
+      var ic=L.divIcon({html:'<div style="background:'+(spot.demand==='Very High'?'#D85A30':spot.demand==='High'?'#EF9F27':'#1D9E75')+';color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.25)">👥</div>',iconSize:[28,28],iconAnchor:[14,14],className:''});
+      L.marker([spot.lat,spot.lng],{icon:ic}).addTo(map).bindPopup('<div class="popup-title">'+spot.name+'</div><div class="popup-sub">~'+spot.people+' people</div><span class="popup-badge '+(spot.demand==='Very High'||spot.demand==='High'?'red':'orange')+'">'+spot.demand+' demand</span>');
+    });
+
+    // Charity locations
+    CHARITY_LOCATIONS.forEach(ch=>{
+      var ic=L.divIcon({html:'<div style="background:#185FA5;color:white;border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,.25)">🏠</div>',iconSize:[28,28],iconAnchor:[14,14],className:''});
+      L.marker([ch.lat,ch.lng],{icon:ic}).addTo(map).bindPopup('<div class="popup-title">'+ch.name+'</div><div class="popup-sub">'+ch.demand+'</div><span class="popup-badge">Charity Partner</span>');
+    });
+
+    // Draw route line to AI-suggested destination
+    var donations=S.donations||[];var active=donations.find(d=>d.status==='Volunteer Assigned'||d.status==='Picked Up');
+    var qty=(active&&active.quantity)||80;var aiDest=getAIDestination(qty);
+    var routeLine=L.polyline([[17.4399,78.4983],[aiDest.lat,aiDest.lng]],{color:'#1D9E75',weight:4,dashArray:'8,6',opacity:.9}).addTo(map);
+    map.fitBounds(routeLine.getBounds(),{padding:[30,30]});
+
+    // Destination marker pulsing
+    var destIcon=L.divIcon({html:'<div style="background:'+(aiDest.type==='charity'?'#185FA5':'#D85A30')+';color:white;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-size:18px;border:3px solid white;box-shadow:0 0 0 6px rgba(29,158,117,.2),0 2px 10px rgba(0,0,0,.3)">'+aiDest.icon+'</div>',iconSize:[36,36],iconAnchor:[18,18],className:''});
+    L.marker([aiDest.lat,aiDest.lng],{icon:destIcon}).addTo(map).bindPopup('<div class="popup-title">AI Suggested Destination</div><div class="popup-sub">'+aiDest.dest.name+'</div><span class="popup-badge '+(aiDest.type==='charity'?'':'red')+'">'+aiDest.dest.demand+'</span>').openPopup();
+  }catch(err){console.error('Map error:',err);}
+}
+
+// VOLUNTEER PROOF PAGE
+function pageVolProof(){
+  return '<div class="ptitle">Delivery Proof</div><div class="psub">Upload a photo confirming your food distribution</div>'+
+    '<div class="aib"><div class="ail">📋 Instructions</div><div class="ait">Take a clear photo of the food being distributed to beneficiaries. Your current GPS location will be automatically captured. This photo will be verified by the admin team.</div></div>'+
+
+    '<div class="card">'+
+      '<div class="ct" style="margin-bottom:.9rem">Upload Delivery Photo</div>'+
+      '<div class="photo-upload-area" id="photo-drop-area">'+
+        '<input type="file" id="proof-photo-input" accept="image/*" capture="environment">'+
+        '<span class="photo-upload-icon">📷</span>'+
+        '<div class="photo-upload-text">Click to take photo or upload<br><strong>Supports JPG, PNG · Max 10MB</strong></div>'+
+        '<img id="photo-preview" class="photo-preview">'+
+      '</div>'+
+      '<div style="margin-top:1rem">'+
+        '<div class="fg"><label class="fl">Location / Area</label><input class="fi" id="proof-loc" placeholder="e.g. Bahadurpally Junction, near bus stop" value=""></div>'+
+        '<div class="fg"><label class="fl">Number of people served</label><input class="fi" type="number" id="proof-people" placeholder="e.g. 45" min="1"></div>'+
+        '<div class="fg"><label class="fl">Notes (optional)</label><input class="fi" id="proof-notes" placeholder="Any observations about this distribution"></div>'+
+      '</div>'+
+    '</div>'+
+
+    '<div class="card">'+
+      '<div class="ct" style="margin-bottom:.7rem">📍 Pin Delivery Location on Map</div>'+
+      '<div style="font-size:.8rem;color:var(--t2);margin-bottom:.7rem">Tap on the map to mark exactly where you delivered the food</div>'+
+      '<div class="map-container">'+
+        '<div id="photo-map"></div>'+
+      '</div>'+
+      '<div id="map-coords-display" style="font-size:.78rem;color:var(--t3);margin-top:5px;display:none">📍 Pinned: <span id="coords-text"></span></div>'+
+    '</div>'+
+
+    '<div class="err-txt" id="proof-err">Please fill required fields</div>'+
+    '<div id="proof-success" style="display:none" class="delivery-confirmed">'+
+      '<span class="delivery-confirmed-icon">🎉</span>'+
+      '<div class="delivery-confirmed-title">Delivery Proof Submitted!</div>'+
+      '<div class="delivery-confirmed-sub">Thank you for your contribution. Your delivery has been recorded and verified.</div>'+
+    '</div>'+
+    '<button class="abtn ag" id="proof-submit-btn" style="width:100%;padding:12px">Submit Delivery Proof</button>';
+}
+
+function bindVolProof(){
+  setTimeout(()=>{
+    var mapEl=document.getElementById('photo-map');
+    if(!mapEl)return;
+    try{
+      var map=L.map('photo-map',{scrollWheelZoom:false}).setView([17.5615,78.4245],13);
+      S.photoMap=map;
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:18}).addTo(map);
+
+      // Show known hotspots
+      BEGGAR_HOTSPOTS.forEach(spot=>{
+        var ic=L.divIcon({html:'<div style="background:#EF9F27;color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid white;box-shadow:0 1px 4px rgba(0,0,0,.2)">👥</div>',iconSize:[24,24],iconAnchor:[12,12],className:''});
+        L.marker([spot.lat,spot.lng],{icon:ic}).addTo(map).bindPopup('<div class="popup-title">'+spot.name+'</div><div class="popup-sub">Suggested distribution point</div>');
+      });
+
+      map.on('click',function(e){
+        S.photoCoords={lat:e.latlng.lat.toFixed(5),lng:e.latlng.lng.toFixed(5)};
+        if(S.photoMarker)map.removeLayer(S.photoMarker);
+        var ic=L.divIcon({html:'<div style="background:#D85A30;color:white;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:16px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3)">📍</div>',iconSize:[32,32],iconAnchor:[16,32],className:''});
+        S.photoMarker=L.marker([e.latlng.lat,e.latlng.lng],{icon:ic}).addTo(map).bindPopup('<strong>Delivery Location</strong><br>'+S.photoCoords.lat+', '+S.photoCoords.lng).openPopup();
+        document.getElementById('map-coords-display').style.display='block';
+        document.getElementById('coords-text').textContent=S.photoCoords.lat+', '+S.photoCoords.lng;
+        document.getElementById('proof-loc').value='Lat: '+S.photoCoords.lat+', Lng: '+S.photoCoords.lng;
+      });
+    }catch(err){console.error('Photo map error:',err);}
+  },200);
+
+  // Photo preview
+  document.getElementById('proof-photo-input').addEventListener('change',function(){
+    var file=this.files[0];if(!file)return;
+    var reader=new FileReader();
+    reader.onload=function(e){var img=document.getElementById('photo-preview');img.src=e.target.result;img.style.display='block';};
+    reader.readAsDataURL(file);
+    document.getElementById('photo-drop-area').style.borderColor='var(--g)';
+    document.getElementById('photo-drop-area').style.background='var(--gl)';
+  });
+
+  // Submit proof
+  document.getElementById('proof-submit-btn').addEventListener('click',function(){
+    var photo=document.getElementById('proof-photo-input').files[0];
+    var loc=document.getElementById('proof-loc').value.trim();
+    var people=document.getElementById('proof-people').value;
+    if(!photo){document.getElementById('proof-err').textContent='Please upload a photo';document.getElementById('proof-err').style.display='block';return;}
+    if(!loc){document.getElementById('proof-err').textContent='Please enter or pin the delivery location';document.getElementById('proof-err').style.display='block';return;}
+    if(!people||parseInt(people)<1){document.getElementById('proof-err').textContent='Please enter number of people served';document.getElementById('proof-err').style.display='block';return;}
+    setBtnLoading(this,true);
+    setTimeout(()=>{
+      document.getElementById('proof-err').style.display='none';
+      document.getElementById('proof-success').style.display='block';
+      this.style.display='none';
+      toast('Delivery proof submitted successfully! 🎉');
+    },1200);
+  });
+}
+
+function pageVolBoard(){
+  var vols=[{n:'Rahul K.',meals:420,score:98,badge:'Hunger Hero'},{n:'Ananya S.',meals:360,score:95,badge:'Star Volunteer'},{n:'Arjun M.',meals:310,score:92,badge:'Active'},{n:'Priya R.',meals:275,score:90,badge:'Active'}];
+  var mc=['m1','m2','m3','m0'];
+  return '<div class="ptitle">Volunteer Leaderboard</div><div class="psub">Top volunteers by meals delivered · All time</div>'+
+    '<div class="card">'+vols.map((v,i)=>'<div class="row"><div class="rl"><div class="medal '+mc[i]+'">'+(i+1)+'</div><div><div class="in">'+v.n+'</div><div class="is">'+v.meals+' meals · '+v.score+'% reliability</div></div></div><span class="badge g">'+v.badge+'</span></div>').join('')+'</div>';
+}
+
+// CHARITY PAGES
+async function pageCharityHome(){
+  var stats=S.stats;try{var sr=await api('GET','/donations/stats/platform');stats=sr;S.stats=sr;}catch(e){}
+  return '<div class="ptitle">Charity Dashboard</div><div class="psub">Welcome, '+S.user.name+'</div>'+
+    '<div class="sgrid"><div class="scard"><div class="slb">Meals received (total)</div><div class="sval g">0</div></div><div class="scard"><div class="slb">Upcoming deliveries</div><div class="sval">0</div></div><div class="scard"><div class="slb">Platform meals today</div><div class="sval g">'+stats.mealsToday+'</div></div></div>'+
+    '<div class="aib"><div class="ail">🏠 Charity Partner Info</div><div class="ait">As a registered charity partner, you will receive large food batches (150+ meals). Use <strong>Report Need</strong> to request food for specific days and communities.</div></div>'+
+    '<div class="card"><div class="ct" style="margin-bottom:.7rem">Hunger Hotspot Map · Hyderabad</div>'+
+    '<div id="charity-map" style="height:280px;border-radius:var(--rs);overflow:hidden"></div></div>';
+}
+
+async function pageCharityFood(){return '<div class="ptitle">Incoming Food</div><div class="psub">Food scheduled or delivered to your shelter</div><div class="card">'+renderEmptyState('No food scheduled yet. Deliveries will appear here automatically.')+'</div>';}
+
+function pageCharityReport(){
+  return '<div class="ptitle">Report Food Need</div><div class="psub">Request food for your community</div>'+
+    '<div class="card">'+
+      '<div class="fg"><label class="fl">Location / area</label><input class="fi" id="cr-loc" placeholder="e.g. Railway Station, Bus Stand"></div>'+
+      '<div class="fg2">'+
+        '<div class="fg"><label class="fl">Estimated number of people</label><input class="fi" type="number" id="cr-people" placeholder="e.g. 20" min="1"></div>'+
+        '<div class="fg"><label class="fl">Meal type</label><select class="fi" id="cr-meal"><option>Lunch</option><option>Dinner</option><option>Breakfast</option><option>Snacks</option></select></div>'+
+      '</div>'+
+      '<div class="fg"><label class="fl">Needed by (time/date)</label><input class="fi" id="cr-time" placeholder="e.g. Today 7 PM"></div>'+
+      '<div class="fg"><label class="fl">Additional notes</label><input class="fi" id="cr-notes" placeholder="Dietary needs, conditions"></div>'+
+      '<div class="err-txt" id="cr-err">Please fill required fields</div>'+
+      '<button class="abtn ag" id="cr-submit-btn">Submit Report</button>'+
+    '</div>';
+}
+
+function bindCharityReport(){
+  document.getElementById('cr-submit-btn').addEventListener('click',async function(){
+    var loc=document.getElementById('cr-loc').value.trim();var people=document.getElementById('cr-people').value;
+    if(!loc){document.getElementById('cr-err').textContent='Please enter location';document.getElementById('cr-err').style.display='block';return;}
+    if(!people||parseInt(people)<1){document.getElementById('cr-err').textContent='Please enter number of people';document.getElementById('cr-err').style.display='block';return;}
+    setBtnLoading(this,true);
+    try{await api('POST','/reports',{location:loc,estimatedPeople:people,mealType:document.getElementById('cr-meal').value,neededBy:document.getElementById('cr-time').value,notes:document.getElementById('cr-notes').value});toast('Report submitted! Volunteers will be notified.');navTo('charity-home');}catch(e){document.getElementById('cr-err').textContent=e.message;document.getElementById('cr-err').style.display='block';setBtnLoading(this,false);}
+  });
+}
+
+// ADMIN PAGES
+async function pageAdminHome(){
+  var stats={mealsToday:0,wasteKgToday:0,donors:0,volunteers:0,charities:0,hotspots:0,pendingDonations:0};
+  var donations=[];
+  try{var sr=await api('GET','/donations/stats/platform');stats=sr;S.stats=sr;var dr=await api('GET','/donations');donations=dr.donations.filter(d=>d.status==='Pending');}catch(e){}
+  return '<div class="ptitle">Admin Overview</div><div class="psub">Platform-wide analytics · Real-time · <span style="color:var(--c);font-weight:600">Restricted Access</span></div>'+
+    '<div class="sgrid">'+
+      '<div class="scard"><div class="slb">Meals delivered today</div><div class="sval g">'+stats.mealsToday+'</div></div>'+
+      '<div class="scard"><div class="slb">Food waste prevented (kg)</div><div class="sval g">'+(stats.wasteKgToday||0)+'</div></div>'+
+      '<div class="scard"><div class="slb">Active volunteers</div><div class="sval">'+stats.volunteers+'</div></div>'+
+      '<div class="scard"><div class="slb">Donor restaurants</div><div class="sval">'+stats.donors+'</div></div>'+
+      '<div class="scard"><div class="slb">Charity partners</div><div class="sval">'+stats.charities+'</div></div>'+
+      '<div class="scard"><div class="slb">Pending donations</div><div class="sval c">'+(stats.pendingDonations||0)+'</div></div>'+
+    '</div>'+
+    '<div class="card"><div class="ct" style="margin-bottom:.7rem">Active unassigned alerts</div>'+
+    (donations.length===0?'<div style="font-size:.83rem;color:var(--t3);font-style:italic">No unassigned donations right now</div>':
+    donations.map(d=>'<div class="albox urg"><div class="alicon">!</div><div><div class="altt">'+d.foodType+' · '+d.quantity+' meals</div><div class="alst">'+(d.donorLocation||'—')+' · Deadline: '+d.pickupDeadline+'</div></div></div>').join(''))+'</div>'+
+    '<div class="card"><div class="ct" style="margin-bottom:.7rem">AI Routing Summary</div>'+
+    '<div style="font-size:.82rem;color:var(--t2);line-height:1.8">'+
+      '<div class="row"><div class="rl"><span>🏠</span><span class="in">Charity deliveries (≥150 meals)</span></div><span class="badge b">'+Math.ceil(stats.mealsToday/3)+' batches</span></div>'+
+      '<div class="row"><div class="rl"><span>👥</span><span class="in">Street distributions (&lt;150 meals)</span></div><span class="badge c">'+Math.floor(stats.mealsToday/4)+' routes</span></div>'+
+      '<div class="row"><div class="rl"><span>📍</span><span class="in">Top hotspot today</span></div><span class="badge a">Bahadurpally Junction</span></div>'+
+    '</div></div>';
+}
+
+function pageAdminVolunteers(){
+  var vols=[{n:'Rahul K.',meals:420,score:98,st:'Active'},{n:'Ananya S.',meals:360,score:95,st:'Active'},{n:'Arjun M.',meals:310,score:92,st:'Inactive'},{n:'Priya R.',meals:275,score:90,st:'Active'}];
+  return '<div class="ptitle">Volunteer Management</div><div class="psub">All registered volunteers</div>'+
+    '<div class="card">'+vols.map(v=>{var ini=v.n.split(' ').map(w=>w[0]).join('');return '<div class="row"><div class="rl"><div style="width:34px;height:34px;border-radius:50%;background:var(--gl);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;color:var(--gd)">'+ini+'</div><div><div class="in">'+v.n+'</div><div class="is">'+v.meals+' meals · '+v.score+'% reliability</div></div></div><span class="badge '+(v.st==='Active'?'g':'gy')+'">'+v.st+'</span></div>';}).join('')+'</div>';
+}
+
+function pageAdminVerify(){return '<div class="ptitle">Donor Verification</div><div class="psub">Pending restaurant and donor approvals</div><div class="card">'+renderEmptyState('No pending verifications. All donors are verified.')+'</div>';}
+
+async function pageAdminReports(){
+  var reports=[];try{var r=await api('GET','/reports');reports=r.reports;}catch(e){}
+  return '<div class="ptitle">Community Reports</div><div class="psub">Hunger reports from NGOs and citizens</div>'+
+    (reports.length===0?'<div class="card">'+renderEmptyState('No community reports yet.')+'</div>':
+    reports.map(r=>'<div class="card"><div class="ch"><div><div class="ct">'+r.location+'</div><div class="is">~'+r.estimatedPeople+' people · '+r.mealType+(r.neededBy?' · '+r.neededBy:'')+'</div></div><span class="badge '+(r.status==='Pending'?'c':r.status==='Assigned'?'a':'g')+'">'+r.status+'</span></div>'+(r.status==='Pending'?'<button class="abtn ag" style="font-size:.78rem;padding:6px 13px" data-rid="'+r._id+'">Assign Volunteer</button>':'')+'</div>').join(''));
+}
+
+function bindAdminReports(){document.querySelectorAll('[data-rid]').forEach(btn=>{btn.addEventListener('click',async function(){var id=this.getAttribute('data-rid');try{await api('PATCH','/reports/'+id+'/assign',{volunteerId:null});toast('Volunteer assignment sent!');navTo('admin-reports');}catch(e){toast(e.message,true);}});});}
+
+function pageAdminMap(){
+  return '<div class="ptitle">Hunger Hotspot Map</div><div class="psub">Hyderabad region · All beggar hotspots & charity locations</div>'+
+    '<div class="aib"><div class="ail">🤖 AI Routing Logic</div><div class="ait">Donations with <strong>≥ 150 meals</strong> are routed to charity partners (blue markers). Donations with <strong>&lt; 150 meals</strong> are directed to the highest-demand street distribution point (orange/red markers). Bahadurpally Junction is currently the AI\'s top-priority location.</div></div>'+
+    '<div class="card" style="padding:0;overflow:hidden"><div id="admin-hotspot-map" style="height:480px;width:100%"></div></div>'+
+    '<div style="display:flex;gap:.75rem;flex-wrap:wrap;margin-top:.7rem">'+
+      '<div class="route-info" style="flex:1;min-width:200px;margin:0"><div class="route-info-icon">🍽️</div><div class="route-info-text"><strong>Green pin</strong> — Pickup (restaurant/donor)</div></div>'+
+      '<div class="route-info" style="flex:1;min-width:200px;margin:0"><div class="route-info-icon">👥</div><div class="route-info-text"><strong>Red/orange pin</strong> — Street distribution hotspot</div></div>'+
+      '<div class="route-info" style="flex:1;min-width:200px;margin:0"><div class="route-info-icon">🏠</div><div class="route-info-text"><strong>Blue pin</strong> — Charity / shelter partner</div></div>'+
+    '</div>';
+}
+
+function initAdminMap(){
+  var mapEl=document.getElementById('admin-hotspot-map');if(!mapEl)return;
+  try{
+    var map=L.map('admin-hotspot-map',{scrollWheelZoom:true}).setView([17.4399,78.4983],11);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:18}).addTo(map);
+    BEGGAR_HOTSPOTS.forEach(spot=>{
+      var col=spot.demand==='Very High'?'#D85A30':spot.demand==='High'?'#EF9F27':'#1D9E75';
+      var ic=L.divIcon({html:'<div style="background:'+col+';color:white;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:14px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3)">👥</div>',iconSize:[30,30],iconAnchor:[15,15],className:''});
+      L.marker([spot.lat,spot.lng],{icon:ic}).addTo(map).bindPopup('<div class="popup-title">'+spot.name+'</div><div class="popup-sub">~'+spot.people+' people in need</div><span class="popup-badge '+(spot.demand==='Very High'||spot.demand==='High'?'red':'orange')+'">'+spot.demand+' demand</span>');
+    });
+    CHARITY_LOCATIONS.forEach(ch=>{
+      var ic=L.divIcon({html:'<div style="background:#185FA5;color:white;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;font-size:14px;border:3px solid white;box-shadow:0 2px 8px rgba(0,0,0,.3)">🏠</div>',iconSize:[30,30],iconAnchor:[15,15],className:''});
+      L.marker([ch.lat,ch.lng],{icon:ic}).addTo(map).bindPopup('<div class="popup-title">'+ch.name+'</div><div class="popup-sub">'+ch.demand+'</div><span class="popup-badge">Charity Partner</span>');
+    });
+  }catch(err){console.error('Admin map error:',err);}
+}
+
+// Init charity map after render
+document.addEventListener('click',function(e){
+  setTimeout(()=>{
+    var cm=document.getElementById('charity-map');
+    if(cm&&!cm._initialized){
+      cm._initialized=true;
+      try{
+        var map=L.map('charity-map',{scrollWheelZoom:false}).setView([17.4399,78.4983],11);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:18}).addTo(map);
+        BEGGAR_HOTSPOTS.forEach(spot=>{
+          var ic=L.divIcon({html:'<div style="background:'+(spot.demand==='Very High'?'#D85A30':'#EF9F27')+';color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid white">👥</div>',iconSize:[24,24],iconAnchor:[12,12],className:''});
+          L.marker([spot.lat,spot.lng],{icon:ic}).addTo(map).bindPopup('<strong>'+spot.name+'</strong><br>~'+spot.people+' people');
+        });
+        CHARITY_LOCATIONS.forEach(ch=>{
+          var ic=L.divIcon({html:'<div style="background:#185FA5;color:white;border-radius:50%;width:24px;height:24px;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid white">🏠</div>',iconSize:[24,24],iconAnchor:[12,12],className:''});
+          L.marker([ch.lat,ch.lng],{icon:ic}).addTo(map);
+        });
+      }catch(err){}
+    }
+  },300);
+});
+</script>
+</body>
+</html>
